@@ -1,5 +1,5 @@
 export interface GameMeta {
-  id: 'tango' | 'zip' | 'crossclimb' | 'sudoku';
+  id: 'tango' | 'zip' | 'crossclimb' | 'sudoku' | 'queens';
   /** URL segment, e.g. /tango */
   path: string;
   name: string;
@@ -50,6 +50,19 @@ export const GAMES: GameMeta[] = [
       'Hints cost 5 seconds, revealing a row costs 20.',
     ],
     accentVar: '--accent-crossclimb',
+  },
+  {
+    id: 'queens',
+    path: '/queens',
+    name: 'Queens',
+    tagline: 'Crown every region',
+    rules: [
+      'Place exactly one crown in every row, column and coloured region.',
+      'No two crowns may touch — not even diagonally.',
+      'Click once to rule a square out, twice to place a crown.',
+      'Every board has one answer, and no guessing is ever needed.',
+    ],
+    accentVar: '--accent-queens',
   },
   {
     id: 'sudoku',

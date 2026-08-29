@@ -8,6 +8,9 @@ import { isGameWon, isValidMove as sudokuValid } from '../src/games/sudoku/lib/l
 import { generatePuzzle as genZip } from '../src/games/zip/utils/generator.ts';
 import { checkWin as zipWin, isValidMove as zipValid, pointToString } from '../src/games/zip/utils/logic.ts';
 
+import { generatePuzzle as genQueens, SIZE_FOR } from '../src/games/queens/logic/generator.ts';
+import { countSolutions as queensSolutions, solve as queensSolve, findConflicts } from '../src/games/queens/logic/solver.ts';
+
 import { easyPuzzles } from '../src/games/crossclimb/data/puzzles.easy.ts';
 import { mediumPuzzles } from '../src/games/crossclimb/data/puzzles.medium.ts';
 import { hardPuzzles } from '../src/games/crossclimb/data/puzzles.hard.ts';
@@ -85,6 +88,58 @@ for (const diff of ['Easy','Medium','Hard'] as const) {
   const numbers = Object.values(config.checkpoints).sort((a,b)=>a-b);
   check(`${diff} checkpoints numbered 1..N with no gaps`,
     numbers.every((n, i) => n === i + 1));
+}
+
+// ---------- QUEENS ----------
+console.log('\nQUEENS');
+for (const diff of ['Easy','Medium','Hard'] as const) {
+  const N = 6;
+  let unique = 0, agrees = 0, oneCrownPerRegion = 0, contiguous = 0, noTinyRegion = 0, ms = 0;
+
+  for (let i = 0; i < N; i++) {
+    const t0 = Date.now();
+    const { size, regions, solution } = genQueens(diff);
+    ms += Date.now() - t0;
+
+    if (queensSolutions(size, regions, 3) === 1) unique++;
+
+    const solved = queensSolve(size, regions);
+    const key = (p: {r:number,c:number}) => `${p.r}-${p.c}`;
+    if (solved && solved.length === size &&
+        new Set(solved.map(key)).size === size &&
+        solved.every(p => solution.some(q => key(q) === key(p))) &&
+        findConflicts(size, regions, solved).size === 0) agrees++;
+
+    const areas = new Map<number, number>();
+    regions.forEach(r => areas.set(r, (areas.get(r) ?? 0) + 1));
+    const crownCounts = new Array(size).fill(0);
+    for (const crown of solution) crownCounts[regions[crown.r * size + crown.c]]++;
+    if (areas.size === size && crownCounts.every(c => c === 1)) oneCrownPerRegion++;
+    if (Math.min(...areas.values()) >= 2) noTinyRegion++;
+
+    // Every region must be a single connected blob.
+    let allConnected = true;
+    for (const region of areas.keys()) {
+      const cells = regions.map((v, idx) => v === region ? idx : -1).filter(i => i >= 0);
+      const seen = new Set([cells[0]]); const queue = [cells[0]];
+      while (queue.length) {
+        const idx = queue.pop()!; const r = Math.floor(idx / size), c = idx % size;
+        for (const nb of [r>0?idx-size:-1, r<size-1?idx+size:-1, c>0?idx-1:-1, c<size-1?idx+1:-1]) {
+          if (nb < 0 || regions[nb] !== region || seen.has(nb)) continue;
+          seen.add(nb); queue.push(nb);
+        }
+      }
+      if (seen.size !== cells.length) allConnected = false;
+    }
+    if (allConnected) contiguous++;
+  }
+
+  const s = SIZE_FOR[diff];
+  check(`${diff} ${s}x${s} has exactly one solution (${(ms/N).toFixed(0)}ms avg)`, unique === N, `${unique}/${N}`);
+  check(`${diff} solver reproduces the intended crowns, conflict-free`, agrees === N, `${agrees}/${N}`);
+  check(`${diff} one crown per region, ${s} regions`, oneCrownPerRegion === N, `${oneCrownPerRegion}/${N}`);
+  check(`${diff} every region is contiguous`, contiguous === N, `${contiguous}/${N}`);
+  check(`${diff} no single-cell giveaway region`, noTinyRegion === N, `${noTinyRegion}/${N}`);
 }
 
 // ---------- CROSSCLIMB ----------

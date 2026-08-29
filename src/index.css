@@ -45,10 +45,24 @@
   --tango-moon: #4b82d8;
   --tango-moon-edge: #33619f;
 
+  /* Queens — one colour per region, kept pale so a dark crown reads on top */
+  --queens-1: #cbb9e8;
+  --queens-2: #f6cf9d;
+  --queens-3: #b7cdf5;
+  --queens-4: #bfe0b4;
+  --queens-5: #dedcd5;
+  --queens-6: #f4b3b3;
+  --queens-7: #f5e59b;
+  --queens-8: #a8dde0;
+  --queens-9: #e8bcd6;
+  --queens-10: #cdd8a4;
+  --queens-ink: #22201c;
+
   --accent-tango: #e07a2f;
   --accent-zip: #0a66c2;
   --accent-crossclimb: #7a4fd0;
   --accent-sudoku: #0f7a6b;
+  --accent-queens: #7a4fd0;
 
   /* Shape */
   --r-sm: 6px;
@@ -100,10 +114,24 @@
     --tango-moon: #5f92e2;
     --tango-moon-edge: #3d689f;
 
+    /* Queens — dimmed so they sit in a dark page, still pale enough for dark ink */
+    --queens-1: #a793d4;
+    --queens-2: #d9ab74;
+    --queens-3: #8fa9d8;
+    --queens-4: #96bd8c;
+    --queens-5: #b3b0a8;
+    --queens-6: #d38f8f;
+    --queens-7: #d4c274;
+    --queens-8: #7fbabd;
+    --queens-9: #c797b5;
+    --queens-10: #a7b37e;
+    --queens-ink: #17150f;
+
     --accent-tango: #f0a061;
     --accent-zip: #63a6e8;
     --accent-crossclimb: #a98ae6;
     --accent-sudoku: #4fbfa9;
+    --accent-queens: #a98ae6;
 
     --sh-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --sh-md: 0 2px 8px rgb(0 0 0 / 0.45);
@@ -145,10 +173,24 @@
   --tango-moon: #5f92e2;
   --tango-moon-edge: #3d689f;
 
+  /* Queens — dimmed so they sit in a dark page, still pale enough for dark ink */
+  --queens-1: #a793d4;
+  --queens-2: #d9ab74;
+  --queens-3: #8fa9d8;
+  --queens-4: #96bd8c;
+  --queens-5: #b3b0a8;
+  --queens-6: #d38f8f;
+  --queens-7: #d4c274;
+  --queens-8: #7fbabd;
+  --queens-9: #c797b5;
+  --queens-10: #a7b37e;
+  --queens-ink: #17150f;
+
   --accent-tango: #f0a061;
   --accent-zip: #63a6e8;
   --accent-crossclimb: #a98ae6;
   --accent-sudoku: #4fbfa9;
+  --accent-queens: #a98ae6;
 
   --sh-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --sh-md: 0 2px 8px rgb(0 0 0 / 0.45);

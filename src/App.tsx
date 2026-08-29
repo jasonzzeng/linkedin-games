@@ -7,6 +7,7 @@ const Tango = lazy(() => import('./games/tango/TangoGame'));
 const Zip = lazy(() => import('./games/zip/ZipGame'));
 const Crossclimb = lazy(() => import('./games/crossclimb/CrossclimbGame'));
 const Sudoku = lazy(() => import('./games/sudoku/SudokuGame'));
+const Queens = lazy(() => import('./games/queens/QueensGame'));
 
 function Loading() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/zip" element={<Zip />} />
           <Route path="/crossclimb" element={<Crossclimb />} />
           <Route path="/sudoku" element={<Sudoku />} />
+          <Route path="/queens" element={<Queens />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

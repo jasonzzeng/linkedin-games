@@ -80,6 +80,36 @@ export function GameThumb({ id }: { id: GameMeta['id'] }) {
     );
   }
 
+  if (id === 'queens') {
+    const regions = [0, 0, 1, 1, 2, 3, 1, 1, 4, 3, 3, 4, 5, 5, 5, 4];
+    const palette = [
+      'var(--queens-1)', 'var(--queens-2)', 'var(--queens-3)',
+      'var(--queens-4)', 'var(--queens-6)', 'var(--queens-8)',
+    ];
+    const crowns = [1, 7, 8, 14];
+    return (
+      <svg viewBox="0 0 64 64" className={frame} role="presentation">
+        {regions.map((region, index) => {
+          const x = (index % 4) * 16;
+          const y = Math.floor(index / 4) * 16;
+          return (
+            <g key={index}>
+              <rect x={x} y={y} width="16" height="16" fill={palette[region]} />
+              {crowns.includes(index) && (
+                <path
+                  d={`M${x + 4.5} ${y + 10.5}l-1-5 3 2 2.5-3.5 2.5 3.5 3-2-1 5z`}
+                  fill="var(--queens-ink)"
+                />
+              )}
+            </g>
+          );
+        })}
+        <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="2" fill="none"
+          stroke="var(--ink)" strokeOpacity="0.7" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+
   // sudoku
   const digits = [1, 4, 0, 0, 5, 3, 0, 6, 5, 2, 0, 0, 3, 0, 2, 6, 0, 4];
   return (

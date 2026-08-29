@@ -6,6 +6,7 @@ import TangoGame from '../src/games/tango/TangoGame';
 import ZipGame from '../src/games/zip/ZipGame';
 import SudokuGame from '../src/games/sudoku/SudokuGame';
 import CrossclimbGame from '../src/games/crossclimb/CrossclimbGame';
+import QueensGame from '../src/games/queens/QueensGame';
 
 const cases: [string, () => ReactElement][] = [
   ['Home', () => <Home />],
@@ -13,6 +14,7 @@ const cases: [string, () => ReactElement][] = [
   ['Zip', () => <ZipGame />],
   ['Mini Sudoku', () => <SudokuGame />],
   ['Crossclimb', () => <CrossclimbGame />],
+  ['Queens', () => <QueensGame />],
 ];
 
 let failures = 0;

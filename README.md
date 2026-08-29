@@ -1,11 +1,12 @@
 # Games Unlimited
 
-Four puzzle games in the spirit of the LinkedIn dailies — except they never run
+Five puzzle games in the spirit of the LinkedIn dailies — except they never run
 out. Everything is generated in the browser, so there is no daily limit, no
 account, and no backend.
 
 | Game | Route | What it is |
 | --- | --- | --- |
+| Queens | `/queens` | One crown per row, column and colour region, none touching |
 | Tango | `/tango` | Fill a grid with suns and moons, balanced by row and column |
 | Zip | `/zip` | Draw one unbroken path through every square, visiting numbers in order |
 | Crossclimb | `/crossclimb` | Solve a word ladder, then reorder it one letter at a time |
@@ -13,7 +14,13 @@ account, and no backend.
 
 This repository consolidates four separate repos (`tango-unlimited`,
 `zip-unlimited`, `crossclimb-unlimited`, `mini-sudoku-unlimited`) into one app
-with a shared design system.
+with a shared design system. Queens was built here from scratch — there was no
+repo for it.
+
+LinkedIn runs eight daily games; the three not here are **Pinpoint**, **Wend**
+and **Patches**. Pinpoint is pure authored content (five clues, one category)
+with nothing to generate. Wend needs a dictionary and a path-packing generator.
+Patches is a rectangle-tiling puzzle and is the most tractable of the three.
 
 ## Getting started
 
@@ -34,6 +41,7 @@ npm run dev      # http://localhost:5173
 | `npm run check:render` | Server-render every route to catch runtime errors |
 | `npm run check` | All three of the above |
 | `npm run preview:tango` | Render the Tango board to a standalone HTML file for a visual look |
+| `npm run preview:queens` | Same, for the Queens board |
 
 `check:puzzles` is the one worth running after touching a generator. It asserts
 that Tango boards are solvable from their given clues, that Zip's stored path is
@@ -53,6 +61,7 @@ src/
     zip/        utils/
     crossclimb/ game/ + data/ (hand-written puzzle bank)
     sudoku/     lib/
+    queens/     logic/ (generator + solver)
 ```
 
 Each game is a lazily-loaded route, so opening Tango does not download
