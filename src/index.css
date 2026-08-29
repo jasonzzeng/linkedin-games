@@ -1,0 +1,252 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Design tokens
+   One palette for all four games. Each game contributes only an
+   accent; every neutral, radius, shadow and font is shared so the
+   games read as one product.
+   --------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  /* Neutrals — warm grey ground, LinkedIn-feed flavoured */
+  --ground: #f4f2ee;
+  --surface: #ffffff;
+  --surface-sunken: #ebe9e4;
+  --surface-hover: #e8e6e1;
+  --line: #d8d4cd;
+  --line-strong: #b6b1a8;
+
+  /* Ink */
+  --ink: #1b1b18;
+  --ink-muted: #5f5b53;
+  --ink-faint: #8b867c;
+  --ink-inverse: #ffffff;
+
+  /* Brand + semantic */
+  --brand: #0a66c2;
+  --brand-hover: #004182;
+  --brand-soft: #e7f0fa;
+  --danger: #b42318;
+  --danger-soft: #fdeceb;
+  --success: #027a48;
+  --success-soft: #e5f5ed;
+  --warning: #b54708;
+  --warning-soft: #fdf1e3;
+
+  /* Per-game accents */
+  --accent-tango: #e07a2f;
+  --accent-zip: #0a66c2;
+  --accent-crossclimb: #7a4fd0;
+  --accent-sudoku: #0f7a6b;
+
+  /* Shape */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-full: 999px;
+
+  --sh-sm: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.04);
+  --sh-md: 0 2px 6px rgb(0 0 0 / 0.07), 0 6px 16px rgb(0 0 0 / 0.06);
+  --sh-lg: 0 10px 30px rgb(0 0 0 / 0.13), 0 2px 8px rgb(0 0 0 / 0.07);
+
+  /* The accent the current game is painted in; games override it. */
+  --accent: var(--brand);
+  --accent-soft: var(--brand-soft);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ground: #16181c;
+    --surface: #1f2227;
+    --surface-sunken: #191c20;
+    --surface-hover: #292d34;
+    --line: #343941;
+    --line-strong: #4b515b;
+
+    --ink: #f0f1f3;
+    --ink-muted: #a8adb6;
+    --ink-faint: #767c86;
+    --ink-inverse: #16181c;
+
+    --brand: #63a6e8;
+    --brand-hover: #8cc0f0;
+    --brand-soft: #17293c;
+    --danger: #f27a70;
+    --danger-soft: #3a1f1d;
+    --success: #58c79b;
+    --success-soft: #143028;
+    --warning: #e0a05c;
+    --warning-soft: #33241a;
+
+    --accent-tango: #f0a061;
+    --accent-zip: #63a6e8;
+    --accent-crossclimb: #a98ae6;
+    --accent-sudoku: #4fbfa9;
+
+    --sh-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --sh-md: 0 2px 8px rgb(0 0 0 / 0.45);
+    --sh-lg: 0 12px 34px rgb(0 0 0 / 0.55);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ground: #16181c;
+  --surface: #1f2227;
+  --surface-sunken: #191c20;
+  --surface-hover: #292d34;
+  --line: #343941;
+  --line-strong: #4b515b;
+
+  --ink: #f0f1f3;
+  --ink-muted: #a8adb6;
+  --ink-faint: #767c86;
+  --ink-inverse: #16181c;
+
+  --brand: #63a6e8;
+  --brand-hover: #8cc0f0;
+  --brand-soft: #17293c;
+  --danger: #f27a70;
+  --danger-soft: #3a1f1d;
+  --success: #58c79b;
+  --success-soft: #143028;
+  --warning: #e0a05c;
+  --warning-soft: #33241a;
+
+  --accent-tango: #f0a061;
+  --accent-zip: #63a6e8;
+  --accent-crossclimb: #a98ae6;
+  --accent-sudoku: #4fbfa9;
+
+  --sh-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --sh-md: 0 2px 8px rgb(0 0 0 / 0.45);
+  --sh-lg: 0 12px 34px rgb(0 0 0 / 0.55);
+}
+
+/* Expose the tokens to Tailwind as utilities (bg-surface, text-ink, …) */
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-sunken: var(--surface-sunken);
+  --color-hover: var(--surface-hover);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-muted: var(--ink-muted);
+  --color-faint: var(--ink-faint);
+  --color-inverse: var(--ink-inverse);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+
+  --shadow-sm: var(--sh-sm);
+  --shadow-md: var(--sh-md);
+  --shadow-lg: var(--sh-lg);
+
+  --font-sans: "Inter var", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* --------------------------------------------------------------- */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Numbers that don't jitter — timers, checkpoints, sudoku digits */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Game boards should never be text-selectable; it ruins drag input. */
+.board-surface {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.animate-shake { animation: shake 0.3s ease-in-out; }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-pop-in { animation: pop-in 0.18s cubic-bezier(0.2, 0.8, 0.3, 1); }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in { animation: fade-in 0.15s ease-out; }
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-rise-in { animation: rise-in 0.2s cubic-bezier(0.2, 0.8, 0.3, 1); }
+
+@keyframes flash-cell {
+  0%, 100% { background-color: var(--surface); }
+  50% { background-color: var(--accent-soft); }
+}
+.animate-flash { animation: flash-cell 0.4s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,111 @@
+import { generatePuzzle as genTango } from '../src/games/tango/logic/generator.ts';
+import { checkWinCondition, validateBoard } from '../src/games/tango/logic/utils.ts';
+import { solveGrid } from '../src/games/tango/logic/solver.ts';
+
+import { generatePuzzle as genSudoku } from '../src/games/sudoku/lib/generator.ts';
+import { isGameWon, isValidMove as sudokuValid } from '../src/games/sudoku/lib/logic.ts';
+
+import { generatePuzzle as genZip } from '../src/games/zip/utils/generator.ts';
+import { checkWin as zipWin, isValidMove as zipValid, pointToString } from '../src/games/zip/utils/logic.ts';
+
+import { easyPuzzles } from '../src/games/crossclimb/data/puzzles.easy.ts';
+import { mediumPuzzles } from '../src/games/crossclimb/data/puzzles.medium.ts';
+import { hardPuzzles } from '../src/games/crossclimb/data/puzzles.hard.ts';
+import { differsByOneLetter } from '../src/games/crossclimb/game/differsByOneLetter.ts';
+
+let failures = 0;
+const check = (name: string, ok: boolean, detail = '') => {
+  if (!ok) { failures++; console.log(`  FAIL  ${name} ${detail}`); }
+  else console.log(`  ok    ${name}`);
+};
+
+// ---------- TANGO ----------
+console.log('\nTANGO');
+for (const [size, diff] of [[6,'Easy'],[6,'Hard'],[8,'Medium']] as const) {
+  const t0 = Date.now();
+  const { grid, relations, solution } = genTango(size, diff);
+  const ms = Date.now() - t0;
+  check(`${size}x${size} ${diff} solution is a legal board (${ms}ms)`,
+    checkWinCondition(solution, relations));
+  const { invalidCells } = validateBoard(grid, relations);
+  check(`${size}x${size} ${diff} given clues contain no contradiction`, invalidCells.size === 0);
+  const solved = solveGrid(grid, relations);
+  check(`${size}x${size} ${diff} puzzle is solvable from its clues`,
+    solved !== null && checkWinCondition(solved, relations));
+}
+
+// ---------- SUDOKU ----------
+console.log('\nMINI SUDOKU');
+for (const diff of ['Easy','Medium','Hard'] as const) {
+  const t0 = Date.now();
+  const { initial, solution } = genSudoku(diff);
+  const ms = Date.now() - t0;
+  check(`${diff} solution is complete and valid (${ms}ms)`, isGameWon(solution));
+  const clues = initial.filter(c => c !== null).length;
+  check(`${diff} clue count is sane (${clues} clues)`, clues >= 8 && clues <= 36);
+  const consistent = initial.every((v, i) => v === null || v === solution[i]);
+  check(`${diff} every given matches the solution`, consistent);
+
+  // The real fix: exactly one solution.
+  const count = (board: (number|null)[], limit = 2): number => {
+    const i = board.findIndex(c => c === null);
+    if (i === -1) return 1;
+    let found = 0;
+    for (let v = 1; v <= 6; v++) {
+      if (!sudokuValid(board, i, v)) continue;
+      board[i] = v; found += count(board, limit - found); board[i] = null;
+      if (found >= limit) break;
+    }
+    return found;
+  };
+  check(`${diff} puzzle has exactly one solution`, count([...initial]) === 1);
+}
+
+// ---------- ZIP ----------
+console.log('\nZIP');
+for (const diff of ['Easy','Medium','Hard'] as const) {
+  const t0 = Date.now();
+  const config = genZip(diff);
+  const ms = Date.now() - t0;
+  const path = config.solutionPath!;
+  check(`${diff} path covers every square exactly once (${ms}ms)`,
+    path.length === config.width * config.height &&
+    new Set(path.map(pointToString)).size === path.length);
+
+  // Walk the stored solution through the game's own move validator.
+  let legal = true;
+  const walked = [path[0]];
+  for (let i = 1; i < path.length; i++) {
+    if (!zipValid(walked, path[i], config)) { legal = false; break; }
+    walked.push(path[i]);
+  }
+  check(`${diff} solution path is legal move-by-move`, legal);
+  check(`${diff} solution path registers as a win`, zipWin(walked, config));
+
+  const numbers = Object.values(config.checkpoints).sort((a,b)=>a-b);
+  check(`${diff} checkpoints numbered 1..N with no gaps`,
+    numbers.every((n, i) => n === i + 1));
+}
+
+// ---------- CROSSCLIMB ----------
+console.log('\nCROSSCLIMB');
+for (const [label, bank] of [['easy',easyPuzzles],['medium',mediumPuzzles],['hard',hardPuzzles]] as const) {
+  let ladderOk = true, lengthOk = true, idsOk = new Set<string>().size === 0;
+  const ids = new Set<string>();
+  const bad: string[] = [];
+  for (const p of bank) {
+    if (ids.has(p.id)) idsOk = false;
+    ids.add(p.id);
+    const chain = [p.topAnswer, ...p.middleRungs.map(r => r.answer), p.bottomAnswer];
+    if (!chain.every(w => w.length === p.wordLength)) { lengthOk = false; bad.push(`${p.id} length`); }
+    for (let i = 1; i < chain.length; i++) {
+      if (!differsByOneLetter(chain[i], chain[i-1])) { ladderOk = false; bad.push(`${p.id}: ${chain[i-1]}→${chain[i]}`); }
+    }
+  }
+  check(`${label}: ${bank.length} puzzles, all ids unique`, idsOk);
+  check(`${label}: every answer matches its wordLength`, lengthOk, bad.filter(b=>b.includes('length')).join(', '));
+  check(`${label}: every ladder steps by one letter`, ladderOk, bad.filter(b=>b.includes('→')).slice(0,8).join(' | '));
+}
+
+console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
+process.exit(failures === 0 ? 0 : 1);
