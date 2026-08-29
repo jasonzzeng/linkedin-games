@@ -33,6 +33,7 @@ npm run dev      # http://localhost:5173
 | `npm run check:puzzles` | Generate puzzles and assert they are solvable and unique |
 | `npm run check:render` | Server-render every route to catch runtime errors |
 | `npm run check` | All three of the above |
+| `npm run preview:tango` | Render the Tango board to a standalone HTML file for a visual look |
 
 `check:puzzles` is the one worth running after touching a generator. It asserts
 that Tango boards are solvable from their given clues, that Zip's stored path is
@@ -88,6 +89,14 @@ scaffolding that is cleaned up here:
 - Zip only handled mouse events; it now uses pointer events, so dragging works
   on touch devices.
 - `validateWord` always returned `true` while carrying an unused word list.
+- Tango's board was restyled after the real game: one continuous grid with
+  hairline dividers rather than separated tiles, a plain ringed disc for the sun
+  instead of a rayed one, and constraint marks that interrupt the divider rather
+  than sitting in a badge on top of it.
+- Tango scattered constraint marks at random without checking any were needed,
+  leaving a 6x6 Easy board carrying ~25 marks against roughly ten in the real
+  game. Givens and marks are now budgeted separately and every clue has to earn
+  its place, giving 12 givens / 8 marks on Easy and 5 / 10 on Hard.
 
 ## Credits
 

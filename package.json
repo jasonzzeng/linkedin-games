@@ -10,7 +10,8 @@
     "lint": "tsc --noEmit -p tsconfig.app.json",
     "check:puzzles": "esbuild scripts/verify-puzzles.ts --bundle --platform=node --format=cjs --log-level=error --outfile=node_modules/.cache/verify-puzzles.cjs && node node_modules/.cache/verify-puzzles.cjs",
     "check:render": "esbuild scripts/render-check.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/render-check.cjs && node node_modules/.cache/render-check.cjs",
-    "check": "npm run lint && npm run check:puzzles && npm run check:render"
+    "check": "npm run lint && npm run check:puzzles && npm run check:render",
+    "preview:tango": "esbuild scripts/preview-tango.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/preview-tango.cjs && node node_modules/.cache/preview-tango.cjs tango-preview.html"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

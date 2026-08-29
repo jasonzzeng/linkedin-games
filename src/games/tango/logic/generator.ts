@@ -4,71 +4,85 @@ import { createEmptyGrid, cloneGrid } from './utils';
 import { solveGrid, countSolutions } from './solver';
 import { EMPTY, DIFFICULTY_CONFIG } from './constants';
 
-export const generatePuzzle = (size: number, difficulty: Difficulty): { grid: Grid, relations: Relation[], solution: Grid } => {
-  // 1. Generate a full valid board (Solution)
-  // We start with an empty grid and no relations and just ask the solver to fill it randomly.
-  const empty = createEmptyGrid(size);
-  const solution = solveGrid(empty, []);
-  
-  if (!solution) throw new Error("Failed to generate base solution");
+const shuffle = <T,>(items: T[]): T[] => {
+  const next = [...items];
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+};
 
-  // 2. Generate Relations based on the solution
-  const relations: Relation[] = [];
+export const generatePuzzle = (
+  size: number,
+  difficulty: Difficulty,
+): { grid: Grid; relations: Relation[]; solution: Grid } => {
   const config = DIFFICULTY_CONFIG[difficulty];
-  
-  // Horizontal candidates
+
+  // 1. A random complete board becomes the solution.
+  const solution = solveGrid(createEmptyGrid(size), []);
+  if (!solution) throw new Error('Failed to generate base solution');
+
+  // 2. Offer up a pool of candidate constraints consistent with that solution.
+  //    Most will be discarded in step 3; a generous pool just means variety.
+  const candidates: Relation[] = [];
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size - 1; c++) {
       if (Math.random() < config.relationChance) {
-        const type = solution[r][c] === solution[r][c+1] ? RelationType.Equal : RelationType.Opposite;
-        relations.push({ r, c, vertical: false, type });
+        candidates.push({
+          r,
+          c,
+          vertical: false,
+          type: solution[r][c] === solution[r][c + 1] ? RelationType.Equal : RelationType.Opposite,
+        });
       }
     }
   }
-  // Vertical candidates
   for (let r = 0; r < size - 1; r++) {
     for (let c = 0; c < size; c++) {
       if (Math.random() < config.relationChance) {
-        const type = solution[r][c] === solution[r+1][c] ? RelationType.Equal : RelationType.Opposite;
-        relations.push({ r, c, vertical: true, type });
+        candidates.push({
+          r,
+          c,
+          vertical: true,
+          type: solution[r][c] === solution[r + 1][c] ? RelationType.Equal : RelationType.Opposite,
+        });
       }
     }
   }
 
-  // 3. Dig holes (remove cells)
-  // We want to reach a certain emptiness while maintaining uniqueness
+  // 3. Strip clues away while the puzzle still has exactly one solution,
+  //    emptying cells before pruning marks so the constraints are what carries
+  //    the solve — the way the real game plays. Each is held to its own budget.
+  //    Digging every hole first, as this used to, leaves the givens so dense
+  //    that every constraint is redundant; removing everything greedily strips
+  //    the board to two givens and a thicket of marks. Budgeting both lands in
+  //    between.
   const puzzle = cloneGrid(solution);
-  const cells = [];
-  for(let r=0; r<size; r++) for(let c=0; c<size; c++) cells.push({r,c});
-  
-  // Shuffle cells to remove randomly
-  for (let i = cells.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cells[i], cells[j]] = [cells[j], cells[i]];
+  let relations = candidates;
+
+  const cells: { r: number; c: number }[] = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) cells.push({ r, c });
   }
 
-  // Determine target filled count
-  const targetFilled = Math.floor(size * size * config.fillFactor);
-  let currentFilled = size * size;
+  const area = size * size;
+  const targetGivens = Math.max(1, Math.round(area * config.givenFactor));
+  const targetMarks = Math.max(0, Math.round(area * config.markFactor));
 
-  for (const cell of cells) {
-    if (currentFilled <= targetFilled) break;
+  let givens = area;
+  for (const { r, c } of shuffle(cells)) {
+    if (givens <= targetGivens) break;
+    const previous = puzzle[r][c];
+    puzzle[r][c] = EMPTY;
+    if (countSolutions(puzzle, relations, 2) === 1) givens--;
+    else puzzle[r][c] = previous;
+  }
 
-    const originalVal = puzzle[cell.r][cell.c];
-    puzzle[cell.r][cell.c] = EMPTY;
-
-    // Check uniqueness
-    // Optimization: Standard solver might be slow for empty boards.
-    // But since we are only removing one by one, it's usually okay for 6x6 to 10x10.
-    // For 12x12+ it might hitch on 'Hard'.
-    const solutions = countSolutions(puzzle, relations, 2);
-    
-    if (solutions !== 1) {
-      // Not unique (or no solution, which shouldn't happen if we started from valid), put it back
-      puzzle[cell.r][cell.c] = originalVal;
-    } else {
-      currentFilled--;
-    }
+  for (const candidate of shuffle(candidates)) {
+    if (relations.length <= targetMarks) break;
+    const trimmed = relations.filter((relation) => relation !== candidate);
+    if (countSolutions(puzzle, trimmed, 2) === 1) relations = trimmed;
   }
 
   return { grid: puzzle, relations, solution };

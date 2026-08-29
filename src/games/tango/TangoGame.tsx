@@ -3,6 +3,7 @@ import { Lightbulb, RotateCcw, Shuffle, Undo2 } from 'lucide-react';
 import { getGame } from '../../lib/games';
 import { useTimer } from '../../lib/useTimer';
 import { useBestTime } from '../../lib/usePersistedState';
+import { useCellSize } from '../../lib/useCellSize';
 import { loadValue, saveValue, clearValue } from '../../lib/storage';
 import { GameShell } from '../../shared/GameShell';
 import { Button } from '../../shared/Button';
@@ -52,6 +53,8 @@ export default function TangoGame() {
   const [isWon, setIsWon] = useState(false);
   const [finalTime, setFinalTime] = useState(0);
   const [clearOpen, setClearOpen] = useState(false);
+
+  const cell = useCellSize({ cols: size, rows: size, max: 64, min: 30, reservedHeight: 330 });
 
   const { elapsed, reset: resetTimer } = useTimer(!isWon && !generating);
   const { best, submit } = useBestTime('tango', `${difficulty}-${size}`);
@@ -216,12 +219,6 @@ export default function TangoGame() {
         }}
       />
       <div className="ml-auto flex items-center gap-2">
-        <Button size="sm" onClick={undo} disabled={history.length === 0 || generating}>
-          <Undo2 size={15} /> Undo
-        </Button>
-        <Button size="sm" onClick={showHint} disabled={generating}>
-          <Lightbulb size={15} /> Hint
-        </Button>
         <Button size="sm" onClick={() => setClearOpen(true)} disabled={generating}>
           <RotateCcw size={15} /> Clear
         </Button>
@@ -245,21 +242,34 @@ export default function TangoGame() {
         </div>
       ) : (
         <>
-          <TangoBoard
-            grid={grid}
-            initialGrid={initialGrid}
-            relations={relations}
-            size={size}
-            onCellClick={handleCellClick}
-            hintCell={hint?.coords ?? null}
-            lastMove={lastMove}
-            invalidCells={invalidCells}
-          />
+          <div className="flex flex-col items-stretch gap-4" style={{ width: cell * size }}>
+            <TangoBoard
+              grid={grid}
+              initialGrid={initialGrid}
+              relations={relations}
+              size={size}
+              cell={cell}
+              onCellClick={handleCellClick}
+              hintCell={hint?.coords ?? null}
+              lastMove={lastMove}
+              invalidCells={invalidCells}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button size="lg" onClick={undo} disabled={history.length === 0 || generating}>
+                <Undo2 size={17} /> Undo
+              </Button>
+              <Button size="lg" onClick={showHint} disabled={generating}>
+                <Lightbulb size={17} /> Hint
+              </Button>
+            </div>
+          </div>
+
           <p className="mt-4 max-w-md text-center text-[13px] leading-relaxed text-faint">
             Click to cycle sun → moon → empty. Right-click to place a moon directly.
           </p>
           {hint && (
-            <p className="mt-3 rounded-full bg-accent-soft px-4 py-2 text-[13px] font-medium text-ink">
+            <p className="mt-3 max-w-md rounded-lg bg-accent-soft px-4 py-2.5 text-center text-[13px] font-medium text-ink">
               {hint.message}
             </p>
           )}

@@ -36,6 +36,15 @@
   --warning-soft: #fdf1e3;
 
   /* Per-game accents */
+  /* Tango board — modelled on the real game's palette */
+  --tango-grid: #e4dfd4;
+  --tango-locked: #edeae2;
+  --tango-mark: #7a7466;
+  --tango-sun: #f0b32f;
+  --tango-sun-edge: #cf8f1c;
+  --tango-moon: #4b82d8;
+  --tango-moon-edge: #33619f;
+
   --accent-tango: #e07a2f;
   --accent-zip: #0a66c2;
   --accent-crossclimb: #7a4fd0;
@@ -82,6 +91,15 @@
     --warning: #e0a05c;
     --warning-soft: #33241a;
 
+    /* Tango board */
+    --tango-grid: #3a3f47;
+    --tango-locked: #2d323a;
+    --tango-mark: #969ca6;
+    --tango-sun: #f2bb46;
+    --tango-sun-edge: #b3821f;
+    --tango-moon: #5f92e2;
+    --tango-moon-edge: #3d689f;
+
     --accent-tango: #f0a061;
     --accent-zip: #63a6e8;
     --accent-crossclimb: #a98ae6;
@@ -117,6 +135,15 @@
   --success-soft: #143028;
   --warning: #e0a05c;
   --warning-soft: #33241a;
+
+  /* Tango board */
+  --tango-grid: #3a3f47;
+  --tango-locked: #2d323a;
+  --tango-mark: #969ca6;
+  --tango-sun: #f2bb46;
+  --tango-sun-edge: #b3821f;
+  --tango-moon: #5f92e2;
+  --tango-moon-edge: #3d689f;
 
   --accent-tango: #f0a061;
   --accent-zip: #63a6e8;
