@@ -83,8 +83,8 @@ export function GameThumb({ id }: { id: GameMeta['id'] }) {
   if (id === 'queens') {
     const regions = [0, 0, 1, 1, 2, 3, 1, 1, 4, 3, 3, 4, 5, 5, 5, 4];
     const palette = [
-      'var(--queens-1)', 'var(--queens-2)', 'var(--queens-3)',
-      'var(--queens-4)', 'var(--queens-6)', 'var(--queens-8)',
+      'var(--swatch-1)', 'var(--swatch-2)', 'var(--swatch-3)',
+      'var(--swatch-4)', 'var(--swatch-6)', 'var(--swatch-8)',
     ];
     const crowns = [1, 7, 8, 14];
     return (
@@ -98,7 +98,7 @@ export function GameThumb({ id }: { id: GameMeta['id'] }) {
               {crowns.includes(index) && (
                 <path
                   d={`M${x + 4.5} ${y + 10.5}l-1-5 3 2 2.5-3.5 2.5 3.5 3-2-1 5z`}
-                  fill="var(--queens-ink)"
+                  fill="var(--swatch-ink)"
                 />
               )}
             </g>
@@ -106,6 +106,103 @@ export function GameThumb({ id }: { id: GameMeta['id'] }) {
         })}
         <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="2" fill="none"
           stroke="var(--ink)" strokeOpacity="0.7" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+
+  if (id === 'patches') {
+    const patches = [
+      { x: 0, y: 0, w: 1, h: 3, fill: 'var(--swatch-3)', label: '3' },
+      { x: 1, y: 0, w: 3, h: 2, fill: 'var(--swatch-6)', label: '6' },
+      { x: 1, y: 2, w: 2, h: 1, fill: 'var(--swatch-7)', label: '' },
+      { x: 3, y: 2, w: 1, h: 2, fill: 'var(--swatch-4)', label: '' },
+      { x: 0, y: 3, w: 3, h: 1, fill: 'var(--swatch-2)', label: '3' },
+    ];
+    return (
+      <svg viewBox="0 0 64 64" className={frame} role="presentation">
+        {patches.map((patch, index) => (
+          <g key={index}>
+            <rect
+              x={patch.x * 16 + 1.5}
+              y={patch.y * 16 + 1.5}
+              width={patch.w * 16 - 3}
+              height={patch.h * 16 - 3}
+              rx="3"
+              fill={patch.fill}
+            />
+            {patch.label && (
+              <text
+                x={patch.x * 16 + (patch.w * 16) / 2}
+                y={patch.y * 16 + (patch.h * 16) / 2 + 3.5}
+                textAnchor="middle"
+                fontSize="9"
+                fontWeight="700"
+                fill="var(--swatch-ink)"
+                fontFamily="var(--font-sans)"
+              >
+                {patch.label}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+    );
+  }
+
+  if (id === 'pinpoint') {
+    return (
+      <svg viewBox="0 0 64 64" className={frame} role="presentation">
+        {[0, 1, 2, 3, 4].map((row) => (
+          <rect
+            key={row}
+            x="2"
+            y={row * 12.4 + 2}
+            width="60"
+            height="10.4"
+            rx="2.5"
+            fill="var(--accent-pinpoint)"
+            opacity={0.25 + row * 0.16}
+          />
+        ))}
+      </svg>
+    );
+  }
+
+  if (id === 'wend') {
+    const letters = ['W', 'E', 'N', 'D'];
+    return (
+      <svg viewBox="0 0 64 64" className={frame} role="presentation">
+        {Array.from({ length: 16 }).map((_, index) => {
+          const x = (index % 4) * 16 + 1;
+          const y = Math.floor(index / 4) * 16 + 1;
+          const onPath = [0, 1, 5, 9, 10, 14].includes(index);
+          return (
+            <rect
+              key={index}
+              x={x}
+              y={y}
+              width="14"
+              height="14"
+              rx="3"
+              fill={onPath ? 'var(--accent-wend)' : 'var(--surface-sunken)'}
+              opacity={onPath ? 0.85 : 1}
+            />
+          );
+        })}
+        {[0, 1, 5, 9].map((index, i) => (
+          <text
+            key={index}
+            x={(index % 4) * 16 + 8}
+            y={Math.floor(index / 4) * 16 + 12.5}
+            textAnchor="middle"
+            fontSize="9"
+            fontWeight="700"
+            fill="var(--swatch-ink)"
+            fontFamily="var(--font-sans)"
+          >
+            {letters[i]}
+          </text>
+        ))}
       </svg>
     );
   }

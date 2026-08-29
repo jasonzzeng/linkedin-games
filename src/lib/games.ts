@@ -1,5 +1,5 @@
 export interface GameMeta {
-  id: 'tango' | 'zip' | 'crossclimb' | 'sudoku' | 'queens';
+  id: 'tango' | 'zip' | 'crossclimb' | 'sudoku' | 'queens' | 'patches' | 'pinpoint' | 'wend';
   /** URL segment, e.g. /tango */
   path: string;
   name: string;
@@ -63,6 +63,45 @@ export const GAMES: GameMeta[] = [
       'Every board has one answer, and no guessing is ever needed.',
     ],
     accentVar: '--accent-queens',
+  },
+  {
+    id: 'patches',
+    path: '/patches',
+    name: 'Patches',
+    tagline: 'Piece it together',
+    rules: [
+      'Grow every marker into a rectangle by dragging across the grid.',
+      'The patches must fill the board exactly, with no gaps and no overlaps.',
+      'A marker\u2019s silhouette is the shape it needs: square, tall or wide.',
+      'A dashed marker takes any shape. A number is the count of squares.',
+    ],
+    accentVar: '--accent-patches',
+  },
+  {
+    id: 'pinpoint',
+    path: '/pinpoint',
+    name: 'Pinpoint',
+    tagline: 'Guess the category',
+    rules: [
+      'Five things are revealed one at a time; all belong to one category.',
+      'Name the category in as few clues as you can.',
+      'A wrong guess costs you a clue \u2014 you get five in all.',
+      'Close wording counts, so you need the idea, not the exact phrase.',
+    ],
+    accentVar: '--accent-pinpoint',
+  },
+  {
+    id: 'wend',
+    path: '/wend',
+    name: 'Wend',
+    tagline: 'Weave through words',
+    rules: [
+      'Drag through touching letters to spell each of the hidden words.',
+      'Every unshaded square belongs to exactly one word.',
+      'Words may bend in any direction, but never cross themselves.',
+      'The rows underneath show how long each word is.',
+    ],
+    accentVar: '--accent-wend',
   },
   {
     id: 'sudoku',

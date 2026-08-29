@@ -12,7 +12,9 @@
     "check:render": "esbuild scripts/render-check.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/render-check.cjs && node node_modules/.cache/render-check.cjs",
     "check": "npm run lint && npm run check:puzzles && npm run check:render",
     "preview:tango": "esbuild scripts/preview-tango.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/preview-tango.cjs && node node_modules/.cache/preview-tango.cjs tango-preview.html",
-    "preview:queens": "esbuild scripts/preview-queens.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/preview-queens.cjs && node node_modules/.cache/preview-queens.cjs queens-preview.html"
+    "preview:queens": "esbuild scripts/preview-queens.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/preview-queens.cjs && node node_modules/.cache/preview-queens.cjs queens-preview.html",
+    "preview:patches": "esbuild scripts/preview-patches.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/preview-patches.cjs && node node_modules/.cache/preview-patches.cjs patches-preview.html",
+    "preview:home": "esbuild scripts/preview-home.tsx --bundle --platform=node --format=cjs --jsx=automatic --loader:.css=empty --log-level=error --outfile=node_modules/.cache/preview-home.cjs && node node_modules/.cache/preview-home.cjs home-preview.html"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

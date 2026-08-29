@@ -11,6 +11,15 @@ import { checkWin as zipWin, isValidMove as zipValid, pointToString } from '../s
 import { generatePuzzle as genQueens, SIZE_FOR } from '../src/games/queens/logic/generator.ts';
 import { countSolutions as queensSolutions, solve as queensSolve, findConflicts } from '../src/games/queens/logic/solver.ts';
 
+import { generatePuzzle as genPatches, SIZE_FOR as PATCH_SIZE } from '../src/games/patches/logic/generator.ts';
+import { countTilings, isComplete } from '../src/games/patches/logic/solver.ts';
+
+import { generatePuzzle as genWend, SHAPE, neighbours } from '../src/games/wend/logic/generator.ts';
+import { WORDS } from '../src/games/wend/data/words.ts';
+import { PUZZLES as PINPOINT } from '../src/games/pinpoint/data/puzzles.ts';
+import { isCorrect } from '../src/games/pinpoint/types.ts';
+import type { PinpointPuzzle } from '../src/games/pinpoint/types.ts';
+
 import { easyPuzzles } from '../src/games/crossclimb/data/puzzles.easy.ts';
 import { mediumPuzzles } from '../src/games/crossclimb/data/puzzles.medium.ts';
 import { hardPuzzles } from '../src/games/crossclimb/data/puzzles.hard.ts';
@@ -140,6 +149,107 @@ for (const diff of ['Easy','Medium','Hard'] as const) {
   check(`${diff} one crown per region, ${s} regions`, oneCrownPerRegion === N, `${oneCrownPerRegion}/${N}`);
   check(`${diff} every region is contiguous`, contiguous === N, `${contiguous}/${N}`);
   check(`${diff} no single-cell giveaway region`, noTinyRegion === N, `${noTinyRegion}/${N}`);
+}
+
+// ---------- PATCHES ----------
+console.log('\nPATCHES');
+for (const diff of ['Easy','Medium','Hard'] as const) {
+  const N = 12;
+  let unique = 0, tiles = 0, seedOwnership = 0, ms = 0, patches = 0;
+
+  for (let i = 0; i < N; i++) {
+    const t0 = Date.now();
+    const p = genPatches(diff);
+    ms += Date.now() - t0;
+    patches += p.solution.length;
+
+    if (countTilings(p.size, p.seeds, 3) === 1) unique++;
+    if (isComplete(p.size, p.seeds, p.solution)) tiles++;
+
+    // Each marker must fall inside exactly one patch, and each patch hold one.
+    const ok = p.seeds.every(seed => {
+      const sx = seed.index % p.size, sy = Math.floor(seed.index / p.size);
+      return p.solution.filter(r => sx >= r.x && sx < r.x + r.w && sy >= r.y && sy < r.y + r.h).length === 1;
+    }) && p.solution.length === p.seeds.length;
+    if (ok) seedOwnership++;
+  }
+
+  const s = PATCH_SIZE[diff];
+  check(`${diff} ${s}x${s} has exactly one tiling (${(ms/N).toFixed(0)}ms avg, ${(patches/N).toFixed(1)} patches)`, unique === N, `${unique}/${N}`);
+  check(`${diff} the stored solution tiles the board exactly`, tiles === N, `${tiles}/${N}`);
+  check(`${diff} one marker per patch, one patch per marker`, seedOwnership === N, `${seedOwnership}/${N}`);
+}
+
+// ---------- WEND ----------
+console.log('\nWEND');
+{
+  let lengthOk = 0, alphaOk = 0, dupeOk = 0, total = 0;
+  for (const [len, list] of Object.entries(WORDS)) {
+    total++;
+    if (list.every(w => w.length === Number(len))) lengthOk++;
+    if (list.every(w => /^[A-Z]+$/.test(w))) alphaOk++;
+    if (new Set(list).size === list.length) dupeOk++;
+  }
+  check(`word bank: every entry matches its length bucket`, lengthOk === total);
+  check(`word bank: every entry is plain A-Z (no truncation artefacts)`, alphaOk === total);
+  check(`word bank: no duplicates within a length`, dupeOk === total);
+}
+
+for (const diff of ['Easy','Medium','Hard'] as const) {
+  const N = 10;
+  let partitions = 0, connected = 0, spells = 0, lettersOk = 0, distinct = 0, ms = 0;
+
+  for (let i = 0; i < N; i++) {
+    const t0 = Date.now();
+    const p = genWend(diff);
+    ms += Date.now() - t0;
+    const { size } = SHAPE[diff];
+
+    const seen = new Set<number>();
+    let overlap = false;
+    for (const path of p.paths) for (const c of path) { if (seen.has(c)) overlap = true; seen.add(c); }
+    const free = p.blocked.filter(b => !b).length;
+    if (!overlap && seen.size === free) partitions++;
+
+    if (p.paths.every(path => path.every((c, k) => k === 0 || neighbours(size, path[k-1]).includes(c)))) connected++;
+    if (p.paths.every((path, idx) => path.map(c => p.letters[c]).join('') === p.words[idx])) spells++;
+    if (p.blocked.every((b, idx) => b ? p.letters[idx] === '' : p.letters[idx] !== '')) lettersOk++;
+    if (new Set(p.words).size === p.words.length) distinct++;
+  }
+
+  const { size, lengths } = SHAPE[diff];
+  check(`${diff} ${size}x${size} paths partition every free square (${(ms/N).toFixed(0)}ms avg)`, partitions === N, `${partitions}/${N}`);
+  check(`${diff} every path is a connected walk`, connected === N, `${connected}/${N}`);
+  check(`${diff} every path spells its word (${lengths.join('/')})`, spells === N, `${spells}/${N}`);
+  check(`${diff} blocked squares hold no letter, free squares all do`, lettersOk === N, `${lettersOk}/${N}`);
+  check(`${diff} no word repeats on a board`, distinct === N, `${distinct}/${N}`);
+}
+
+// ---------- PINPOINT ----------
+console.log('\nPINPOINT');
+{
+  const ids = new Set(PINPOINT.map(p => p.id));
+  check(`${PINPOINT.length} categories, all ids unique`, ids.size === PINPOINT.length);
+  check('every category has exactly five clues', PINPOINT.every(p => p.clues.length === 5));
+  check('no category repeats a clue', PINPOINT.every(p => new Set(p.clues).size === 5));
+  check('every category accepts its own name', PINPOINT.every(p => isCorrect(p.category, p)));
+  check('accepted answers are non-empty', PINPOINT.every(p => p.accept.length > 0 && p.accept.every(a => a.trim().length > 2)));
+  // A clue must not hand over the category.
+  const giveaways = PINPOINT.flatMap(p => p.clues.filter(c => isCorrect(c, p)).map(c => `${p.id}:${c}`));
+  check('no clue simply restates the category', giveaways.length === 0, giveaways.join(', '));
+
+  // Answer matching: generous about wording, strict about naming a clue.
+  const greek = PINPOINT.find(p => p.id === 'p5')!;
+  const chess = PINPOINT.find(p => p.id === 'p2')!;
+  const cases: [string, PinpointPuzzle, boolean][] = [
+    ['greek letters', greek, true], ['Greek Letters', greek, true],
+    ['the greek alphabet', greek, true], ['alpha', greek, false],
+    ['letters', greek, false], ['', greek, false],
+    ['chess', chess, true], ['chess pieces', chess, true], ['king', chess, false],
+  ];
+  const wrong = cases.filter(([guess, puzzle, want]) => isCorrect(guess, puzzle) !== want);
+  check('answer matching accepts rewordings and rejects bare clues',
+    wrong.length === 0, wrong.map(([g]) => `"${g}"`).join(', '));
 }
 
 // ---------- CROSSCLIMB ----------

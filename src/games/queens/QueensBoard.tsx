@@ -11,8 +11,8 @@ interface QueensBoardProps {
   disabled?: boolean;
 }
 
-const EDGE = 'var(--queens-ink)';
-const SEAM = 'color-mix(in srgb, var(--queens-ink) 14%, transparent)';
+const EDGE = 'var(--swatch-ink)';
+const SEAM = 'color-mix(in srgb, var(--swatch-ink) 14%, transparent)';
 
 /** Ten region colours; boards never exceed nine regions, so one spare. */
 const REGION_COLORS = Array.from({ length: 10 }, (_, i) => `var(--queens-${i + 1})`);
@@ -77,15 +77,15 @@ export function QueensBoard({
               <Crown
                 size={Math.round(cell * 0.52)}
                 strokeWidth={2.25}
-                color={isConflicted ? 'var(--danger)' : 'var(--queens-ink)'}
-                fill={isConflicted ? 'var(--danger)' : 'var(--queens-ink)'}
+                color={isConflicted ? 'var(--danger)' : 'var(--swatch-ink)'}
+                fill={isConflicted ? 'var(--danger)' : 'var(--swatch-ink)'}
               />
             )}
             {mark === 'excluded' && (
               <X
                 size={Math.round(cell * 0.34)}
                 strokeWidth={3.5}
-                color="var(--queens-ink)"
+                color="var(--swatch-ink)"
                 className="opacity-45"
               />
             )}

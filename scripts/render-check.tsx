@@ -7,6 +7,9 @@ import ZipGame from '../src/games/zip/ZipGame';
 import SudokuGame from '../src/games/sudoku/SudokuGame';
 import CrossclimbGame from '../src/games/crossclimb/CrossclimbGame';
 import QueensGame from '../src/games/queens/QueensGame';
+import PatchesGame from '../src/games/patches/PatchesGame';
+import PinpointGame from '../src/games/pinpoint/PinpointGame';
+import WendGame from '../src/games/wend/WendGame';
 
 const cases: [string, () => ReactElement][] = [
   ['Home', () => <Home />],
@@ -15,6 +18,9 @@ const cases: [string, () => ReactElement][] = [
   ['Mini Sudoku', () => <SudokuGame />],
   ['Crossclimb', () => <CrossclimbGame />],
   ['Queens', () => <QueensGame />],
+  ['Patches', () => <PatchesGame />],
+  ['Pinpoint', () => <PinpointGame />],
+  ['Wend', () => <WendGame />],
 ];
 
 let failures = 0;

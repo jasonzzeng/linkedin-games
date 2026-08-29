@@ -8,6 +8,9 @@ const Zip = lazy(() => import('./games/zip/ZipGame'));
 const Crossclimb = lazy(() => import('./games/crossclimb/CrossclimbGame'));
 const Sudoku = lazy(() => import('./games/sudoku/SudokuGame'));
 const Queens = lazy(() => import('./games/queens/QueensGame'));
+const Patches = lazy(() => import('./games/patches/PatchesGame'));
+const Pinpoint = lazy(() => import('./games/pinpoint/PinpointGame'));
+const Wend = lazy(() => import('./games/wend/WendGame'));
 
 function Loading() {
   return (
@@ -28,6 +31,9 @@ export default function App() {
           <Route path="/crossclimb" element={<Crossclimb />} />
           <Route path="/sudoku" element={<Sudoku />} />
           <Route path="/queens" element={<Queens />} />
+          <Route path="/patches" element={<Patches />} />
+          <Route path="/pinpoint" element={<Pinpoint />} />
+          <Route path="/wend" element={<Wend />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

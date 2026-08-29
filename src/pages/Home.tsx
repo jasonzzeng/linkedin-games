@@ -22,7 +22,7 @@ export function Home() {
               Games Unlimited
             </h1>
             <p className="mt-2 max-w-md text-[15px] leading-relaxed text-muted">
-              Five puzzles in the spirit of the LinkedIn dailies — except they never run out.
+              Eight puzzles in the spirit of the LinkedIn dailies — except they never run out.
               Everything generates in your browser, so there is no daily limit and no account.
             </p>
           </div>

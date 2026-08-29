@@ -1,12 +1,15 @@
 # Games Unlimited
 
-Five puzzle games in the spirit of the LinkedIn dailies — except they never run
+All eight of the LinkedIn daily games, reimplemented in the spirit of the originals — except they never run
 out. Everything is generated in the browser, so there is no daily limit, no
 account, and no backend.
 
 | Game | Route | What it is |
 | --- | --- | --- |
 | Queens | `/queens` | One crown per row, column and colour region, none touching |
+| Patches | `/patches` | Grow each marker into a rectangle so they tile the grid exactly |
+| Pinpoint | `/pinpoint` | Five things, one category — name it in as few clues as you can |
+| Wend | `/wend` | Trace words through a letter grid until every square is used |
 | Tango | `/tango` | Fill a grid with suns and moons, balanced by row and column |
 | Zip | `/zip` | Draw one unbroken path through every square, visiting numbers in order |
 | Crossclimb | `/crossclimb` | Solve a word ladder, then reorder it one letter at a time |
@@ -17,10 +20,15 @@ This repository consolidates four separate repos (`tango-unlimited`,
 with a shared design system. Queens was built here from scratch — there was no
 repo for it.
 
-LinkedIn runs eight daily games; the three not here are **Pinpoint**, **Wend**
-and **Patches**. Pinpoint is pure authored content (five clues, one category)
-with nothing to generate. Wend needs a dictionary and a path-packing generator.
-Patches is a rectangle-tiling puzzle and is the most tractable of the three.
+Queens, Patches, Pinpoint and Wend were built here from scratch — there were no
+repos for them.
+
+Five of the eight generate endlessly with a guaranteed-unique answer. The two
+word games are content-bound rather than algorithmic, and are honest about it:
+**Pinpoint** draws on a hand-written bank of 36 categories, and **Crossclimb**
+on a bank of 40 ladders. **Wend** generates its grids but draws its words from a
+curated list of everyday words, because a player has to recognise what they are
+tracing.
 
 ## Getting started
 
@@ -42,6 +50,8 @@ npm run dev      # http://localhost:5173
 | `npm run check` | All three of the above |
 | `npm run preview:tango` | Render the Tango board to a standalone HTML file for a visual look |
 | `npm run preview:queens` | Same, for the Queens board |
+| `npm run preview:patches` | Same, for the Patches board |
+| `npm run preview:home` | Renders the hub plus the Wend board |
 
 `check:puzzles` is the one worth running after touching a generator. It asserts
 that Tango boards are solvable from their given clues, that Zip's stored path is
@@ -62,6 +72,9 @@ src/
     crossclimb/ game/ + data/ (hand-written puzzle bank)
     sudoku/     lib/
     queens/     logic/ (generator + solver)
+    patches/    logic/ (tiling generator + solver)
+    pinpoint/   data/ (category bank)
+    wend/       logic/ + data/ (word bank)
 ```
 
 Each game is a lazily-loaded route, so opening Tango does not download
