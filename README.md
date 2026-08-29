@@ -20,8 +20,19 @@ This repository consolidates four separate repos (`tango-unlimited`,
 with a shared design system. Queens was built here from scratch — there was no
 repo for it.
 
-Queens, Patches, Pinpoint and Wend were built here from scratch — there were no
-repos for them.
+Patches, Pinpoint and Wend were built here from scratch. **Queens is a port of
+the separate `queens-unlimited` build** (a Next.js app that lived only on disk
+and was never pushed) — its engine moved across intact:
+
+- a human-style logical solver with four technique levels, which both grades
+  puzzles and powers hints that name the deduction in words
+- difficulty by hardest-deduction-required, not just board size
+- generation in a Web Worker with a spare puzzle kept warm per difficulty
+  (this actually works here — the original's README notes the Next dev server
+  would not bundle its worker, so it fell back to the main thread)
+- drag to cross out a run of squares, Bresenham-walked so a fast drag skips
+  nothing; drag from a crossed-out square to erase
+- keyboard play, settings, per-difficulty stats and streaks, and resume
 
 Five of the eight generate endlessly with a guaranteed-unique answer. The two
 word games are content-bound rather than algorithmic, and are honest about it:
@@ -71,7 +82,7 @@ src/
     zip/        utils/
     crossclimb/ game/ + data/ (hand-written puzzle bank)
     sudoku/     lib/
-    queens/     logic/ (generator + solver)
+    queens/     lib/ (solver, generator, worker, storage — ported wholesale)
     patches/    logic/ (tiling generator + solver)
     pinpoint/   data/ (category bank)
     wend/       logic/ + data/ (word bank)

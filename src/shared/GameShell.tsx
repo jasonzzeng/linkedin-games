@@ -9,17 +9,19 @@ import { HelpPanel } from './HelpPanel';
 
 interface GameShellProps {
   game: GameMeta;
-  /** Seconds on the clock, shown top-right. */
-  elapsed: number;
+  /** Seconds on the clock, shown top-right. Pass null to hide it. */
+  elapsed: number | null;
   /** Game-specific controls, laid out in a row beneath the header. */
   toolbar?: ReactNode;
+  /** Extra controls in the header, left of the help button. */
+  headerExtra?: ReactNode;
   children: ReactNode;
 }
 
 const themeIcon = { system: Monitor, light: Sun, dark: Moon };
 const themeLabel = { system: 'Theme: system', light: 'Theme: light', dark: 'Theme: dark' };
 
-export function GameShell({ game, elapsed, toolbar, children }: GameShellProps) {
+export function GameShell({ game, elapsed, toolbar, headerExtra, children }: GameShellProps) {
   const [helpOpen, setHelpOpen] = useState(false);
   const { preference, cycle } = useTheme();
   const ThemeIcon = themeIcon[preference];
@@ -52,12 +54,15 @@ export function GameShell({ game, elapsed, toolbar, children }: GameShellProps) 
           </div>
 
           <div className="ml-auto flex items-center gap-1">
-            <div
-              className="tabular mr-1 rounded-full bg-sunken px-3 py-1.5 text-sm font-semibold text-ink"
-              aria-label="Elapsed time"
-            >
-              {formatTime(elapsed)}
-            </div>
+            {elapsed !== null && (
+              <div
+                className="tabular mr-1 rounded-full bg-sunken px-3 py-1.5 text-sm font-semibold text-ink"
+                aria-label="Elapsed time"
+              >
+                {formatTime(elapsed)}
+              </div>
+            )}
+            {headerExtra}
             <IconButton label="How to play" onClick={() => setHelpOpen(true)}>
               <CircleHelp size={18} />
             </IconButton>

@@ -59,7 +59,10 @@ export const GAMES: GameMeta[] = [
     rules: [
       'Place exactly one crown in every row, column and coloured region.',
       'No two crowns may touch — not even diagonally.',
-      'Click once to rule a square out, twice to place a crown.',
+      'Tap once to cross a square out, tap again for a crown, once more to clear.',
+      'Drag to cross out a run of squares; drag from a crossed-out square to erase.',
+      'Arrow keys move, Enter cycles a square, X toggles a mark.',
+      'Hint names the next deduction in words and can apply it for you.',
       'Every board has one answer, and no guessing is ever needed.',
     ],
     accentVar: '--accent-queens',

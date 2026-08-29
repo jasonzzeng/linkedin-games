@@ -8,8 +8,12 @@ import { isGameWon, isValidMove as sudokuValid } from '../src/games/sudoku/lib/l
 import { generatePuzzle as genZip } from '../src/games/zip/utils/generator.ts';
 import { checkWin as zipWin, isValidMove as zipValid, pointToString } from '../src/games/zip/utils/logic.ts';
 
-import { generatePuzzle as genQueens, SIZE_FOR } from '../src/games/queens/logic/generator.ts';
-import { countSolutions as queensSolutions, solve as queensSolve, findConflicts } from '../src/games/queens/logic/solver.ts';
+import { generatePuzzle as genQueens } from '../src/games/queens/lib/generator.ts';
+import {
+  analyse, countSolutions as queensSolutions, findMove, initialState, applyMove, hint,
+} from '../src/games/queens/lib/solver.ts';
+import { regionCells, orthogonal } from '../src/games/queens/lib/board.ts';
+import { DIFFICULTY_SPECS } from '../src/games/queens/lib/types.ts';
 
 import { generatePuzzle as genPatches, SIZE_FOR as PATCH_SIZE } from '../src/games/patches/logic/generator.ts';
 import { countTilings, isComplete } from '../src/games/patches/logic/solver.ts';
@@ -100,55 +104,108 @@ for (const diff of ['Easy','Medium','Hard'] as const) {
 }
 
 // ---------- QUEENS ----------
+// Ported from the standalone queens-unlimited build. The soundness and hint
+// checks are the point: a hint that points somewhere wrong is worse than none.
 console.log('\nQUEENS');
-for (const diff of ['Easy','Medium','Hard'] as const) {
-  const N = 6;
-  let unique = 0, agrees = 0, oneCrownPerRegion = 0, contiguous = 0, noTinyRegion = 0, ms = 0;
+for (const diff of ['easy','medium','hard'] as const) {
+  const N = 4;
+  const spec = DIFFICULTY_SPECS[diff];
+  let unique = 0, regionsOk = 0, solutionLegal = 0, sound = 0, solvedByLogic = 0;
+  let hintsSolve = 0, flagsWrongCrown = 0, flagsWrongMark = 0, ratingOk = 0, ms = 0;
 
   for (let i = 0; i < N; i++) {
     const t0 = Date.now();
-    const { size, regions, solution } = genQueens(diff);
+    const { puzzle } = genQueens(diff, { budgetMs: 4000 });
     ms += Date.now() - t0;
+    const { size, regions, solution, rating } = puzzle;
 
-    if (queensSolutions(size, regions, 3) === 1) unique++;
+    if (queensSolutions(size, regions, 2) === 1) unique++;
+    if (rating >= spec.minRating && rating <= spec.maxRating) ratingOk++;
 
-    const solved = queensSolve(size, regions);
-    const key = (p: {r:number,c:number}) => `${p.r}-${p.c}`;
-    if (solved && solved.length === size &&
-        new Set(solved.map(key)).size === size &&
-        solved.every(p => solution.some(q => key(q) === key(p))) &&
-        findConflicts(size, regions, solved).size === 0) agrees++;
-
-    const areas = new Map<number, number>();
-    regions.forEach(r => areas.set(r, (areas.get(r) ?? 0) + 1));
-    const crownCounts = new Array(size).fill(0);
-    for (const crown of solution) crownCounts[regions[crown.r * size + crown.c]]++;
-    if (areas.size === size && crownCounts.every(c => c === 1)) oneCrownPerRegion++;
-    if (Math.min(...areas.values()) >= 2) noTinyRegion++;
-
-    // Every region must be a single connected blob.
-    let allConnected = true;
-    for (const region of areas.keys()) {
-      const cells = regions.map((v, idx) => v === region ? idx : -1).filter(i => i >= 0);
-      const seen = new Set([cells[0]]); const queue = [cells[0]];
-      while (queue.length) {
-        const idx = queue.pop()!; const r = Math.floor(idx / size), c = idx % size;
-        for (const nb of [r>0?idx-size:-1, r<size-1?idx+size:-1, c>0?idx-1:-1, c<size-1?idx+1:-1]) {
-          if (nb < 0 || regions[nb] !== region || seen.has(nb)) continue;
-          seen.add(nb); queue.push(nb);
+    // Regions: right count, none trivial, each one connected.
+    const groups = regionCells(size, regions);
+    let regionsFine = groups.length === size;
+    for (const group of groups) {
+      if (group.length < 2) regionsFine = false;
+      const seen = new Set([group[0]]); const stack = [group[0]];
+      while (stack.length) {
+        const cell = stack.pop()!;
+        for (const n of orthogonal(size, cell)) {
+          if (regions[n] === regions[group[0]] && !seen.has(n)) { seen.add(n); stack.push(n); }
         }
       }
-      if (seen.size !== cells.length) allConnected = false;
+      if (seen.size !== group.length) regionsFine = false;
     }
-    if (allConnected) contiguous++;
+    if (regionsFine) regionsOk++;
+
+    // The stated solution obeys every rule.
+    let legal = new Set(solution).size === size &&
+      new Set(solution.map((c, r) => regions[r * size + c])).size === size;
+    for (let r = 1; r < size; r++) if (Math.abs(solution[r] - solution[r - 1]) <= 1) legal = false;
+    if (legal) solutionLegal++;
+
+    // Every move the logical solver makes must agree with the real solution.
+    const a = analyse(size, regions);
+    const st = initialState(a);
+    let unsound = false, guard = 0;
+    for (;;) {
+      const move = findMove(a, st, 4);
+      if (!move || guard++ > 500) break;
+      for (const cell of move.cells) {
+        const isSolutionCell = solution[Math.floor(cell / size)] === cell % size;
+        if (move.kind === 'place' && !isSolutionCell) unsound = true;
+        if (move.kind === 'eliminate' && isSolutionCell) unsound = true;
+      }
+      applyMove(a, st, move);
+      if (st.placed === size) break;
+    }
+    if (!unsound) sound++;
+    if (st.placed === size) solvedByLogic++;
+
+    // Following hints from an empty board must finish the puzzle, and no hint
+    // may repeat something already on the board or contradict the solution.
+    let queens: number[] = [];
+    let marks: number[] = [];
+    let steps = 0, hintsFine = true;
+    for (;;) {
+      if (queens.length === size) break;
+      if (steps++ > 400) { hintsFine = false; break; }
+      const h = hint(size, regions, solution, queens, marks);
+      if (!h || h.kind === 'wrong-crown' || h.kind === 'wrong-mark') { hintsFine = false; break; }
+      if (h.kind === 'place') {
+        for (const cell of h.cells) {
+          if (queens.includes(cell)) hintsFine = false;
+          if (solution[Math.floor(cell / size)] !== cell % size) hintsFine = false;
+        }
+        queens = [...queens, ...h.cells];
+        marks = marks.filter((m) => !h.cells.includes(m));
+      } else {
+        for (const cell of h.cells) {
+          if (marks.includes(cell)) hintsFine = false;
+          if (solution[Math.floor(cell / size)] === cell % size) hintsFine = false;
+        }
+        marks = [...marks, ...h.cells];
+      }
+    }
+    if (hintsFine && queens.length === size) hintsSolve++;
+
+    // A misplaced crown and a bogus X are both reported ahead of any deduction.
+    const badCrown = hint(size, regions, solution, [(size - 1) * size + ((solution[size - 1] + 1) % size)], []);
+    if (badCrown?.kind === 'wrong-crown') flagsWrongCrown++;
+    const badMark = hint(size, regions, solution, [], [solution[0]]);
+    if (badMark?.kind === 'wrong-mark') flagsWrongMark++;
   }
 
-  const s = SIZE_FOR[diff];
-  check(`${diff} ${s}x${s} has exactly one solution (${(ms/N).toFixed(0)}ms avg)`, unique === N, `${unique}/${N}`);
-  check(`${diff} solver reproduces the intended crowns, conflict-free`, agrees === N, `${agrees}/${N}`);
-  check(`${diff} one crown per region, ${s} regions`, oneCrownPerRegion === N, `${oneCrownPerRegion}/${N}`);
-  check(`${diff} every region is contiguous`, contiguous === N, `${contiguous}/${N}`);
-  check(`${diff} no single-cell giveaway region`, noTinyRegion === N, `${noTinyRegion}/${N}`);
+  const label = `${diff} ${spec.size}x${spec.size}`;
+  check(`${label} has exactly one solution (${(ms/N).toFixed(0)}ms avg)`, unique === N, `${unique}/${N}`);
+  check(`${label} regions: ${spec.size} of them, connected, none trivial`, regionsOk === N, `${regionsOk}/${N}`);
+  check(`${label} the stated solution breaks no rule`, solutionLegal === N, `${solutionLegal}/${N}`);
+  check(`${label} every logical move agrees with the solution`, sound === N, `${sound}/${N}`);
+  check(`${label} logic alone finishes the board`, solvedByLogic === N, `${solvedByLogic}/${N}`);
+  check(`${label} following hints solves it, none repeated or wrong`, hintsSolve === N, `${hintsSolve}/${N}`);
+  check(`${label} a misplaced crown is reported`, flagsWrongCrown === N, `${flagsWrongCrown}/${N}`);
+  check(`${label} a bogus X is reported`, flagsWrongMark === N, `${flagsWrongMark}/${N}`);
+  check(`${label} graded within its difficulty band (${spec.minRating}-${spec.maxRating})`, ratingOk === N, `${ratingOk}/${N}`);
 }
 
 // ---------- PATCHES ----------
