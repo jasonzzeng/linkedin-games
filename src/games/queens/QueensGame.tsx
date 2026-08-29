@@ -369,7 +369,12 @@ export default function QueensGame() {
         value={difficulty}
         options={difficultyOptions}
         disabled={loading}
-        onChange={(value) => startGame(value)}
+        onChange={(value) => {
+          // Boards are saved per difficulty, so switching back picks up where
+          // you left off. "New" still deals a fresh one.
+          const saved = loadGame(value);
+          startGame(value, saved && !saved.solved ? saved : null);
+        }}
       />
       <div className="ml-auto flex items-center gap-2">
         <Button
