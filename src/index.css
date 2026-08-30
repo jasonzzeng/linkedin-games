@@ -45,6 +45,18 @@
   --tango-moon: #4b82d8;
   --tango-moon-edge: #33619f;
 
+  /* Wend — vivid word ribbons, modelled on the real game */
+  --wend-1: #a855f7;
+  --wend-2: #e0ab1e;
+  --wend-3: #3b82f6;
+  --wend-4: #e8563a;
+  --wend-5: #17a06b;
+  --wend-frame: #3c3c3c;
+  --wend-line: #e2e2e4;
+  --wend-blocked: #b4b4b4;
+  --wend-slot: #e4e4e6;
+  --wend-letter: #17150f;
+
   /* Shared swatch palette — Queens regions and Patches patches */
   --swatch-1: #cbb9e8;
   --swatch-2: #f6cf9d;
@@ -130,6 +142,18 @@
     --swatch-10: #a7b37e;
     --swatch-ink: #17150f;
 
+    /* Wend */
+    --wend-1: #b47cf5;
+    --wend-2: #d8ad3a;
+    --wend-3: #5b95f2;
+    --wend-4: #ea6d55;
+    --wend-5: #35b083;
+    --wend-frame: #6a707a;
+    --wend-line: #34383f;
+    --wend-blocked: #565c66;
+    --wend-slot: #2c3138;
+    --wend-letter: #17150f;
+
     --accent-tango: #f0a061;
     --accent-zip: #63a6e8;
     --accent-crossclimb: #a98ae6;
@@ -191,6 +215,18 @@
   --swatch-9: #c797b5;
   --swatch-10: #a7b37e;
   --swatch-ink: #17150f;
+
+  /* Wend */
+  --wend-1: #b47cf5;
+  --wend-2: #d8ad3a;
+  --wend-3: #5b95f2;
+  --wend-4: #ea6d55;
+  --wend-5: #35b083;
+  --wend-frame: #6a707a;
+  --wend-line: #34383f;
+  --wend-blocked: #565c66;
+  --wend-slot: #2c3138;
+  --wend-letter: #17150f;
 
   --accent-tango: #f0a061;
   --accent-zip: #63a6e8;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Eraser, Lightbulb, Shuffle } from 'lucide-react';
+import { Eraser, Lightbulb, Shuffle, Undo2 } from 'lucide-react';
 import { getGame } from '../../lib/games';
 import { useTimer } from '../../lib/useTimer';
 import { useBestTime } from '../../lib/usePersistedState';
@@ -9,12 +9,11 @@ import { Button } from '../../shared/Button';
 import { Select } from '../../shared/Select';
 import { Toast } from '../../shared/Toast';
 import { WinDialog } from '../../shared/WinDialog';
-import { WendBoard } from './WendBoard';
+import { WendBoard, WEND_COLORS } from './WendBoard';
 import { generatePuzzle, SHAPE } from './logic/generator';
 import type { Difficulty, Puzzle } from './types';
 
 const meta = getGame('wend');
-const SWATCHES = Array.from({ length: 10 }, (_, i) => `var(--swatch-${i + 1})`);
 
 const difficultyOptions = (['Easy', 'Medium', 'Hard'] as const).map((d) => ({
   value: d,
@@ -26,6 +25,7 @@ export default function WendGame() {
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [found, setFound] = useState<Map<number, number[]>>(new Map());
   const [message, setMessage] = useState<string | null>(null);
+  const [trace, setTrace] = useState<number[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
 
   const [isWon, setIsWon] = useState(false);
@@ -75,12 +75,6 @@ export default function WendGame() {
     setIsWon(true);
   }, [puzzle, found, isWon, elapsed, submit]);
 
-  // Cell index -> which word owns it, for colouring the board.
-  const claimed = new Map<number, number>();
-  for (const [wordIndex, path] of found) {
-    for (const index of path) claimed.set(index, wordIndex);
-  }
-
   const handleTrace = (path: number[]): boolean => {
     if (!puzzle || isWon) return false;
 
@@ -104,6 +98,16 @@ export default function WendGame() {
     return true;
   };
 
+  const undoWord = () => {
+    setFound((previous) => {
+      const keys = [...previous.keys()];
+      if (keys.length === 0) return previous;
+      const next = new Map(previous);
+      next.delete(keys[keys.length - 1]);
+      return next;
+    });
+  };
+
   const hint = () => {
     if (!puzzle || isWon) return;
     const wordIndex = puzzle.words.findIndex((_, index) => !found.has(index));
@@ -111,6 +115,12 @@ export default function WendGame() {
     setFound((previous) => new Map(previous).set(wordIndex, puzzle.paths[wordIndex]));
     setHintsUsed((count) => count + 1);
   };
+
+  const pendingIndex = puzzle
+    ? puzzle.words.findIndex((word, index) => !found.has(index) && word.length >= trace.length)
+    : -1;
+  const pendingColor =
+    pendingIndex === -1 ? 'var(--wend-frame)' : WEND_COLORS[pendingIndex % WEND_COLORS.length];
 
   const toolbar = (
     <>
@@ -141,14 +151,34 @@ export default function WendGame() {
           <div className="flex flex-col items-stretch gap-4" style={{ width: cell * puzzle.size }}>
             <WendBoard
               puzzle={puzzle}
-              claimed={claimed}
+              found={found}
               cell={cell}
               onTrace={handleTrace}
+              onTraceChange={setTrace}
               disabled={isWon}
             />
 
+            {/* What you are spelling right now, echoed under the board. */}
+            <div className="flex h-8 items-center justify-center gap-1">
+              {trace.map((index, i) => (
+                <span
+                  key={index}
+                  style={{
+                    background: pendingColor,
+                    width: Math.max(20, cell * 0.44),
+                    height: Math.max(20, cell * 0.44),
+                    fontSize: Math.max(11, cell * 0.26),
+                  }}
+                  className="flex items-center justify-center rounded-[5px] font-extrabold
+                    text-[var(--wend-letter)]"
+                >
+                  {puzzle.letters[trace[i]]}
+                </span>
+              ))}
+            </div>
+
             {/* One row per word, shortest first, filling in as they are found. */}
-            <ul className="flex flex-col items-center gap-1.5">
+            <ul className="flex flex-col items-start gap-1">
               {puzzle.words.map((word, wordIndex) => {
                 const isFound = found.has(wordIndex);
                 return (
@@ -157,14 +187,15 @@ export default function WendGame() {
                       <span
                         key={i}
                         style={{
-                          background: isFound ? SWATCHES[wordIndex % SWATCHES.length] : undefined,
-                          width: Math.max(18, cell * 0.42),
-                          height: Math.max(18, cell * 0.42),
-                          fontSize: Math.max(10, cell * 0.24),
+                          background: isFound
+                            ? WEND_COLORS[wordIndex % WEND_COLORS.length]
+                            : 'var(--wend-slot)',
+                          width: Math.max(20, cell * 0.44),
+                          height: Math.max(20, cell * 0.44),
+                          fontSize: Math.max(11, cell * 0.26),
                         }}
-                        className={`flex items-center justify-center rounded-sm font-bold ${
-                          isFound ? 'text-[var(--swatch-ink)]' : 'bg-sunken'
-                        }`}
+                        className="flex items-center justify-center rounded-[5px]
+                          font-extrabold text-[var(--wend-letter)]"
                       >
                         {isFound ? letter : ''}
                       </span>
@@ -174,9 +205,14 @@ export default function WendGame() {
               })}
             </ul>
 
-            <Button size="lg" onClick={hint} disabled={isWon}>
-              <Lightbulb size={17} /> Hint
-            </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button size="lg" onClick={undoWord} disabled={found.size === 0 || isWon}>
+                <Undo2 size={17} /> Undo
+              </Button>
+              <Button size="lg" onClick={hint} disabled={isWon}>
+                <Lightbulb size={17} /> Hint
+              </Button>
+            </div>
           </div>
 
           <p className="mt-4 max-w-md text-center text-[13px] leading-relaxed text-faint">

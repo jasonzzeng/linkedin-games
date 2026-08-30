@@ -4,25 +4,133 @@ import type { Puzzle } from './types';
 
 interface WendBoardProps {
   puzzle: Puzzle;
-  /** Cell index -> index of the word that claimed it, or undefined. */
-  claimed: Map<number, number>;
+  /** Word index -> the ordered cells that spell it. */
+  found: Map<number, number[]>;
   cell: number;
   onTrace: (path: number[]) => boolean;
+  onTraceChange?: (cells: number[]) => void;
   disabled?: boolean;
 }
 
-const SWATCHES = Array.from({ length: 10 }, (_, i) => `var(--swatch-${i + 1})`);
+export const WEND_COLORS = Array.from({ length: 5 }, (_, i) => `var(--wend-${i + 1})`);
 
-export function WendBoard({ puzzle, claimed, cell, onTrace, disabled }: WendBoardProps) {
-  const { size, letters, blocked } = puzzle;
+const centre = (size: number, cell: number, index: number) => ({
+  x: (index % size) * cell + cell / 2,
+  y: Math.floor(index / size) * cell + cell / 2,
+});
+
+/**
+ * A chevron pointing along the step, sitting in the gap between two letters —
+ * how the real board shows which way a word runs.
+ */
+function Chevron({
+  from,
+  to,
+  size,
+  cell,
+}: {
+  from: number;
+  to: number;
+  size: number;
+  cell: number;
+}) {
+  const a = centre(size, cell, from);
+  const b = centre(size, cell, to);
+  const dx = Math.sign(b.x - a.x);
+  const dy = Math.sign(b.y - a.y);
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  const arm = cell * 0.11;
+
+  // Perpendicular to the direction of travel.
+  const px = -dy;
+  const py = dx;
+  const tipX = mx + dx * arm;
+  const tipY = my + dy * arm;
+
+  return (
+    <path
+      d={`M${mx - dx * arm + px * arm} ${my - dy * arm + py * arm}L${tipX} ${tipY}L${
+        mx - dx * arm - px * arm
+      } ${my - dy * arm - py * arm}`}
+      fill="none"
+      stroke="var(--wend-letter)"
+      strokeWidth={Math.max(2, cell * 0.055)}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity="0.75"
+    />
+  );
+}
+
+/** One word drawn as a thick rounded ribbon, capped at the square it starts on. */
+function Ribbon({
+  path,
+  size,
+  cell,
+  color,
+}: {
+  path: number[];
+  size: number;
+  cell: number;
+  color: string;
+}) {
+  if (path.length === 0) return null;
+  const points = path.map((index) => centre(size, cell, index));
+  const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join('');
+
+  return (
+    <g>
+      <path
+        d={d}
+        fill="none"
+        stroke={color}
+        strokeWidth={cell * 0.78}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Ring round the first letter, so you can see which end is the start. */}
+      <circle
+        cx={points[0].x}
+        cy={points[0].y}
+        r={cell * 0.36}
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth={Math.max(2, cell * 0.05)}
+      />
+      {path.slice(0, -1).map((from, i) => (
+        <Chevron key={from} from={from} to={path[i + 1]} size={size} cell={cell} />
+      ))}
+    </g>
+  );
+}
+
+export function WendBoard({
+  puzzle,
+  found,
+  cell,
+  onTrace,
+  onTraceChange,
+  disabled,
+}: WendBoardProps) {
+  const { size, letters, blocked, words } = puzzle;
   const boardRef = useRef<HTMLDivElement>(null);
   const [trace, setTrace] = useState<number[]>([]);
   const [shake, setShake] = useState(false);
 
-  // Pointer handlers live across a whole drag, so read the trace from a ref
+  // Pointer handlers live for a whole drag, so read the trace from a ref
   // rather than closing over a stale copy.
   const traceRef = useRef<number[]>([]);
   traceRef.current = trace;
+
+  const claimed = new Map<number, number>();
+  for (const [wordIndex, path] of found) {
+    for (const index of path) claimed.set(index, wordIndex);
+  }
+
+  useEffect(() => {
+    onTraceChange?.(trace);
+  }, [trace, onTraceChange]);
 
   useEffect(() => {
     if (!shake) return;
@@ -53,7 +161,7 @@ export function WendBoard({ puzzle, claimed, cell, onTrace, disabled }: WendBoar
     const index = cellFromEvent(event);
     if (index === null || blocked[index] || claimed.has(index)) return;
 
-    // Stepping back onto the previous cell rubs the last one out.
+    // Stepping back onto the previous square rubs the last one out.
     if (current.length >= 2 && index === current[current.length - 2]) {
       setTrace(current.slice(0, -1));
       return;
@@ -73,10 +181,29 @@ export function WendBoard({ puzzle, claimed, cell, onTrace, disabled }: WendBoar
     setTrace([]);
   };
 
-  const style: CSSProperties = {
+  // While tracing, borrow the colour of the shortest unfound word that could
+  // still hold this many letters, so the ribbon matches the row it will fill.
+  const pendingIndex = words.findIndex(
+    (word, index) => !found.has(index) && word.length >= trace.length,
+  );
+  const traceColor =
+    pendingIndex === -1 ? 'var(--wend-frame)' : WEND_COLORS[pendingIndex % WEND_COLORS.length];
+
+  const span = cell * size;
+  const gridStyle: CSSProperties = {
     gridTemplateColumns: `repeat(${size}, ${cell}px)`,
     gridTemplateRows: `repeat(${size}, ${cell}px)`,
   };
+
+  // Heavy outline wherever a blocked square meets an open one.
+  const outline: string[] = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const i = r * size + c;
+      if (c + 1 < size && blocked[i + 1] !== blocked[i]) outline.push(`M${c + 1} ${r}v1`);
+      if (r + 1 < size && blocked[i + size] !== blocked[i]) outline.push(`M${c} ${r + 1}h1`);
+    }
+  }
 
   return (
     <div
@@ -85,39 +212,77 @@ export function WendBoard({ puzzle, claimed, cell, onTrace, disabled }: WendBoar
       onPointerMove={extendTrace}
       onPointerUp={endTrace}
       onPointerCancel={endTrace}
-      style={style}
-      className={`board-surface grid overflow-hidden rounded-lg border-2 border-line-strong
-        bg-surface ${shake ? 'animate-shake' : ''}`}
+      style={{ width: span, height: span }}
+      className={`board-surface relative overflow-hidden rounded-xl border-[3px]
+        border-[var(--wend-frame)] bg-surface ${shake ? 'animate-shake' : ''}`}
     >
-      {letters.map((letter, index) => {
-        const isBlocked = blocked[index];
-        const wordIndex = claimed.get(index);
-        const tracePos = trace.indexOf(index);
-
-        const background = isBlocked
-          ? 'var(--surface-sunken)'
-          : tracePos !== -1
-            ? 'var(--accent-soft)'
-            : wordIndex !== undefined
-              ? SWATCHES[wordIndex % SWATCHES.length]
-              : 'var(--surface)';
-
-        return (
+      {/* 1. Square backgrounds and hairlines. */}
+      <div className="absolute inset-0 grid" style={gridStyle}>
+        {letters.map((_, index) => (
           <div
             key={index}
-            data-cell={index}
-            aria-hidden={isBlocked}
-            style={{ background, fontSize: Math.round(cell * 0.42) }}
-            className={`relative flex items-center justify-center border-b border-r border-line
-              font-bold transition-colors
-              ${isBlocked ? '' : 'cursor-pointer'}
-              ${wordIndex !== undefined || tracePos !== -1 ? 'text-[var(--swatch-ink)]' : 'text-ink'}
-              ${tracePos !== -1 ? 'ring-2 ring-inset ring-accent' : ''}`}
-          >
-            {!isBlocked && letter}
-          </div>
-        );
-      })}
+            style={{ background: blocked[index] ? 'var(--wend-blocked)' : undefined }}
+            className={`border-b border-r border-[var(--wend-line)]
+              ${index % size === size - 1 ? 'border-r-0' : ''}
+              ${Math.floor(index / size) === size - 1 ? 'border-b-0' : ''}`}
+          />
+        ))}
+      </div>
+
+      {/* 2. Ribbons and the blocked-region outline, beneath the letters. */}
+      <svg
+        aria-hidden
+        width={span}
+        height={span}
+        className="pointer-events-none absolute inset-0"
+      >
+        <g transform={`scale(${cell})`}>
+          <path
+            d={outline.join('')}
+            stroke="var(--wend-frame)"
+            strokeWidth={3 / cell}
+            fill="none"
+            shapeRendering="crispEdges"
+          />
+        </g>
+        {[...found.entries()].map(([wordIndex, path]) => (
+          <Ribbon
+            key={wordIndex}
+            path={path}
+            size={size}
+            cell={cell}
+            color={WEND_COLORS[wordIndex % WEND_COLORS.length]}
+          />
+        ))}
+        {trace.length > 0 && (
+          <Ribbon path={trace} size={size} cell={cell} color={traceColor} />
+        )}
+      </svg>
+
+      {/* 3. Letters, and the layer that takes the pointer. */}
+      <div className="absolute inset-0 grid" style={gridStyle}>
+        {letters.map((letter, index) => {
+          // Letters sitting on a ribbon are always dark, because the ribbon is
+          // bright in either theme. Everywhere else they follow the theme —
+          // otherwise every unclaimed letter turns near-black on a dark page.
+          const onRibbon = claimed.has(index) || trace.includes(index);
+          return (
+            <div
+              key={index}
+              data-cell={index}
+              aria-hidden={blocked[index]}
+              style={{
+                fontSize: Math.round(cell * 0.46),
+                color: onRibbon ? 'var(--wend-letter)' : 'var(--ink)',
+              }}
+              className={`relative flex items-center justify-center font-extrabold
+                ${blocked[index] ? '' : 'cursor-pointer'}`}
+            >
+              {!blocked[index] && letter}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

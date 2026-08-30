@@ -63,6 +63,7 @@ npm run dev      # http://localhost:5173
 | `npm run preview:queens` | Same, for the Queens board |
 | `npm run preview:patches` | Same, for the Patches board |
 | `npm run preview:home` | Renders the hub plus the Wend board |
+| `npm run preview:wend` | Renders the Wend board and its answer rows |
 
 `check:puzzles` is the one worth running after touching a generator. It asserts
 that Tango boards are solvable from their given clues, that Zip's stored path is
