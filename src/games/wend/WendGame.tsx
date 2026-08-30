@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Eraser, Lightbulb, Shuffle, Undo2 } from 'lucide-react';
 import { getGame } from '../../lib/games';
 import { useTimer } from '../../lib/useTimer';
@@ -9,8 +9,9 @@ import { Button } from '../../shared/Button';
 import { Select } from '../../shared/Select';
 import { Toast } from '../../shared/Toast';
 import { WinDialog } from '../../shared/WinDialog';
-import { WendBoard, WEND_COLORS } from './WendBoard';
+import { WendBoard, WEND_COLORS, type PlacedPath } from './WendBoard';
 import { generatePuzzle, SHAPE } from './logic/generator';
+import { assignRows, coverage, judge, openSquares, overlaps, spell } from './logic/rules';
 import type { Difficulty, Puzzle } from './types';
 
 const meta = getGame('wend');
@@ -23,7 +24,7 @@ const difficultyOptions = (['Easy', 'Medium', 'Hard'] as const).map((d) => ({
 export default function WendGame() {
   const [difficulty, setDifficulty] = useState<Difficulty>('Easy');
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [found, setFound] = useState<Map<number, number[]>>(new Map());
+  const [placed, setPlaced] = useState<number[][]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [trace, setTrace] = useState<number[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
@@ -44,7 +45,7 @@ export default function WendGame() {
   const startNewGame = useCallback(
     (nextDifficulty: Difficulty) => {
       setPuzzle(generatePuzzle(nextDifficulty));
-      setFound(new Map());
+      setPlaced([]);
       setHintsUsed(0);
       setIsWon(false);
       setMessage(null);
@@ -66,61 +67,98 @@ export default function WendGame() {
     return () => window.clearTimeout(id);
   }, [message]);
 
-  useEffect(() => {
-    if (!puzzle || isWon) return;
-    if (found.size !== puzzle.words.length) return;
+  /**
+   * Runs are laid down freely, so the board is judged only once every square
+   * is used: the words are checked then, all together.
+   */
+  const spelledBy = useCallback(
+    (cells: number[]) => (puzzle ? spell(puzzle, cells) : ''),
+    [puzzle],
+  );
 
+  const used = coverage(placed);
+  const total = puzzle ? openSquares(puzzle) : 0;
+  const verdict = puzzle ? judge(puzzle, placed) : { full: false, solved: false };
+  const boardFull = verdict.full;
+  const allWordsRight = verdict.solved;
+
+  useEffect(() => {
+    if (!puzzle || isWon || !allWordsRight) return;
     setFinalTime(elapsed);
     setRecord(submit(elapsed));
     setIsWon(true);
-  }, [puzzle, found, isWon, elapsed, submit]);
+  }, [puzzle, isWon, allWordsRight, elapsed, submit]);
 
+  // Say so when the grid is full but the words are not all real.
+  useEffect(() => {
+    if (!boardFull || allWordsRight || isWon) return;
+    setMessage('Every square is used, but not all of those are words yet.');
+  }, [boardFull, allWordsRight, isWon]);
+
+  /**
+   * Anything traced goes down, word or not — the real game lets you commit a
+   * run you are unsure of and sort it out later. Only a run that would sit on
+   * top of one already there is refused.
+   */
   const handleTrace = (path: number[]): boolean => {
     if (!puzzle || isWon) return false;
 
-    const spelled = path.map((index) => puzzle.letters[index]).join('');
-    const forwards = puzzle.words.indexOf(spelled);
-    const backwards = puzzle.words.indexOf([...spelled].reverse().join(''));
-    const wordIndex = forwards !== -1 ? forwards : backwards;
-
-    if (wordIndex === -1) {
-      setMessage(
-        spelled.length < 4 ? 'Trace a longer run of letters.' : `"${spelled}" is not one of the words.`,
-      );
-      return false;
-    }
-    if (found.has(wordIndex)) {
-      setMessage(`${puzzle.words[wordIndex]} is already found.`);
+    if (overlaps(placed, path)) {
+      setMessage('That crosses a run already on the board.');
       return false;
     }
 
-    setFound((previous) => new Map(previous).set(wordIndex, path));
+    setPlaced((previous) => [...previous, path]);
+    setMessage(null);
     return true;
   };
 
-  const undoWord = () => {
-    setFound((previous) => {
-      const keys = [...previous.keys()];
-      if (keys.length === 0) return previous;
-      const next = new Map(previous);
-      next.delete(keys[keys.length - 1]);
-      return next;
-    });
+  const removePath = (pathIndex: number) => {
+    setPlaced((previous) => previous.filter((_, i) => i !== pathIndex));
   };
+
+  const undoWord = () => setPlaced((previous) => previous.slice(0, -1));
 
   const hint = () => {
     if (!puzzle || isWon) return;
-    const wordIndex = puzzle.words.findIndex((_, index) => !found.has(index));
+
+    // The first intended word not yet correctly on the board.
+    const wordIndex = puzzle.words.findIndex(
+      (word, index) => !placed.some((cells) => spelledBy(cells) === word && cells.length === puzzle.paths[index].length),
+    );
     if (wordIndex === -1) return;
-    setFound((previous) => new Map(previous).set(wordIndex, puzzle.paths[wordIndex]));
+
+    const answer = puzzle.paths[wordIndex];
+    const answerCells = new Set(answer);
+    setPlaced((previous) => [
+      ...previous.filter((cells) => !cells.some((index) => answerCells.has(index))),
+      answer,
+    ]);
     setHintsUsed((count) => count + 1);
   };
 
-  const pendingIndex = puzzle
-    ? puzzle.words.findIndex((word, index) => !found.has(index) && word.length >= trace.length)
-    : -1;
+  /**
+   * Rows claim runs by length: each row takes the first run of exactly its
+   * own length that no earlier row has taken. A run whose length fits no free
+   * row still sits on the board, just without a row and in a neutral colour.
+   */
+  const { slotOf, rowRuns } = useMemo(
+    () => (puzzle ? assignRows(puzzle, placed) : { slotOf: new Map<number, number>(), rowRuns: [] }),
+    [puzzle, placed],
+  );
+
+  const boardPaths: PlacedPath[] = placed.map((cells, index) => {
+    const slot = slotOf.get(index);
+    return {
+      cells,
+      color: slot === undefined ? 'var(--wend-frame)' : WEND_COLORS[slot % WEND_COLORS.length],
+    };
+  });
+
+  // The run being drawn borrows the colour of the first row still empty.
+  const firstEmptyRow = rowRuns.findIndex((run) => run === null);
   const pendingColor =
-    pendingIndex === -1 ? 'var(--wend-frame)' : WEND_COLORS[pendingIndex % WEND_COLORS.length];
+    firstEmptyRow === -1 ? 'var(--wend-frame)' : WEND_COLORS[firstEmptyRow % WEND_COLORS.length];
 
   const toolbar = (
     <>
@@ -134,7 +172,7 @@ export default function WendGame() {
         }}
       />
       <div className="ml-auto flex items-center gap-2">
-        <Button size="sm" onClick={() => setFound(new Map())} disabled={found.size === 0}>
+        <Button size="sm" onClick={() => setPlaced([])} disabled={placed.length === 0}>
           <Eraser size={15} /> Clear
         </Button>
         <Button size="sm" variant="primary" onClick={() => startNewGame(difficulty)}>
@@ -151,9 +189,11 @@ export default function WendGame() {
           <div className="flex flex-col items-stretch gap-4" style={{ width: cell * puzzle.size }}>
             <WendBoard
               puzzle={puzzle}
-              found={found}
+              paths={boardPaths}
+              traceColor={pendingColor}
               cell={cell}
               onTrace={handleTrace}
+              onRemove={removePath}
               onTraceChange={setTrace}
               disabled={isWon}
             />
@@ -177,27 +217,33 @@ export default function WendGame() {
               ))}
             </div>
 
-            {/* One row per word, shortest first, filling in as they are found. */}
+            {/* One row per word, shortest first. A row shows whatever run
+                landed in it, whether or not it spells anything. */}
             <ul className="flex flex-col items-start gap-1">
               {puzzle.words.map((word, wordIndex) => {
-                const isFound = found.has(wordIndex);
+                const run = rowRuns[wordIndex];
+                const spelled = run ? spelledBy(run) : '';
+                const isWord = spelled === word;
                 return (
                   <li key={word} className="flex gap-1">
-                    {[...word].map((letter, i) => (
+                    {[...word].map((_, i) => (
                       <span
                         key={i}
                         style={{
-                          background: isFound
+                          background: run
                             ? WEND_COLORS[wordIndex % WEND_COLORS.length]
                             : 'var(--wend-slot)',
                           width: Math.max(20, cell * 0.44),
                           height: Math.max(20, cell * 0.44),
                           fontSize: Math.max(11, cell * 0.26),
+                          // A run that is not a word reads a shade lighter, so
+                          // you can see it is provisional without being told off.
+                          opacity: run && !isWord ? 0.62 : 1,
                         }}
                         className="flex items-center justify-center rounded-[5px]
                           font-extrabold text-[var(--wend-letter)]"
                       >
-                        {isFound ? letter : ''}
+                        {spelled[i] ?? ''}
                       </span>
                     ))}
                   </li>
@@ -206,7 +252,7 @@ export default function WendGame() {
             </ul>
 
             <div className="grid grid-cols-2 gap-3">
-              <Button size="lg" onClick={undoWord} disabled={found.size === 0 || isWon}>
+              <Button size="lg" onClick={undoWord} disabled={placed.length === 0 || isWon}>
                 <Undo2 size={17} /> Undo
               </Button>
               <Button size="lg" onClick={hint} disabled={isWon}>
@@ -215,9 +261,12 @@ export default function WendGame() {
             </div>
           </div>
 
-          <p className="mt-4 max-w-md text-center text-[13px] leading-relaxed text-faint">
-            Drag through touching letters to spell a word. Every unshaded square
-            belongs to exactly one of the {puzzle.words.length} words.
+          <p className="tabular mt-4 text-[13px] font-medium text-faint">
+            {used} of {total} squares used
+          </p>
+          <p className="mt-1 max-w-md text-center text-[13px] leading-relaxed text-faint">
+            Drag through touching letters to lay down a run — it does not have to
+            be a word yet. Tap a run to lift it off again.
           </p>
         </>
       )}

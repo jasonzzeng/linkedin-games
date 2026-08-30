@@ -2,12 +2,20 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } fr
 import { neighbours } from './logic/generator';
 import type { Puzzle } from './types';
 
+export interface PlacedPath {
+  cells: number[];
+  color: string;
+}
+
 interface WendBoardProps {
   puzzle: Puzzle;
-  /** Word index -> the ordered cells that spell it. */
-  found: Map<number, number[]>;
+  /** Everything currently laid on the board, right or wrong. */
+  paths: PlacedPath[];
+  /** Colour for the run being drawn right now. */
+  traceColor: string;
   cell: number;
   onTrace: (path: number[]) => boolean;
+  onRemove: (pathIndex: number) => void;
   onTraceChange?: (cells: number[]) => void;
   disabled?: boolean;
 }
@@ -107,13 +115,15 @@ function Ribbon({
 
 export function WendBoard({
   puzzle,
-  found,
+  paths,
+  traceColor,
   cell,
   onTrace,
+  onRemove,
   onTraceChange,
   disabled,
 }: WendBoardProps) {
-  const { size, letters, blocked, words } = puzzle;
+  const { size, letters, blocked } = puzzle;
   const boardRef = useRef<HTMLDivElement>(null);
   const [trace, setTrace] = useState<number[]>([]);
   const [shake, setShake] = useState(false);
@@ -123,10 +133,11 @@ export function WendBoard({
   const traceRef = useRef<number[]>([]);
   traceRef.current = trace;
 
+  // Cell -> index of the path covering it.
   const claimed = new Map<number, number>();
-  for (const [wordIndex, path] of found) {
-    for (const index of path) claimed.set(index, wordIndex);
-  }
+  paths.forEach((path, pathIndex) => {
+    for (const index of path.cells) claimed.set(index, pathIndex);
+  });
 
   useEffect(() => {
     onTraceChange?.(trace);
@@ -148,7 +159,16 @@ export function WendBoard({
   const startTrace = (event: PointerEvent<HTMLDivElement>) => {
     if (disabled) return;
     const index = cellFromEvent(event);
-    if (index === null || blocked[index] || claimed.has(index)) return;
+    if (index === null || blocked[index]) return;
+
+    // Touching a run that is already down lifts it off, so a word can be
+    // redrawn without clearing the board.
+    const existing = claimed.get(index);
+    if (existing !== undefined) {
+      onRemove(existing);
+      return;
+    }
+
     event.preventDefault();
     boardRef.current?.setPointerCapture(event.pointerId);
     setTrace([index]);
@@ -180,14 +200,6 @@ export function WendBoard({
     if (current.length > 1 && !onTrace(current)) setShake(true);
     setTrace([]);
   };
-
-  // While tracing, borrow the colour of the shortest unfound word that could
-  // still hold this many letters, so the ribbon matches the row it will fill.
-  const pendingIndex = words.findIndex(
-    (word, index) => !found.has(index) && word.length >= trace.length,
-  );
-  const traceColor =
-    pendingIndex === -1 ? 'var(--wend-frame)' : WEND_COLORS[pendingIndex % WEND_COLORS.length];
 
   const span = cell * size;
   const gridStyle: CSSProperties = {
@@ -245,13 +257,13 @@ export function WendBoard({
             shapeRendering="crispEdges"
           />
         </g>
-        {[...found.entries()].map(([wordIndex, path]) => (
+        {paths.map((path, pathIndex) => (
           <Ribbon
-            key={wordIndex}
-            path={path}
+            key={pathIndex}
+            path={path.cells}
             size={size}
             cell={cell}
-            color={WEND_COLORS[wordIndex % WEND_COLORS.length]}
+            color={path.color}
           />
         ))}
         {trace.length > 0 && (

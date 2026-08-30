@@ -20,6 +20,7 @@ import { countTilings, isComplete } from '../src/games/patches/logic/solver.ts';
 
 import { generatePuzzle as genWend, SHAPE, neighbours } from '../src/games/wend/logic/generator.ts';
 import { WORDS } from '../src/games/wend/data/words.ts';
+import { assignRows, judge, overlaps, spell } from '../src/games/wend/logic/rules.ts';
 import { PUZZLES as PINPOINT } from '../src/games/pinpoint/data/puzzles.ts';
 import { isCorrect } from '../src/games/pinpoint/types.ts';
 import type { PinpointPuzzle } from '../src/games/pinpoint/types.ts';
@@ -280,6 +281,41 @@ for (const diff of ['Easy','Medium','Hard'] as const) {
   check(`${diff} every path spells its word (${lengths.join('/')})`, spells === N, `${spells}/${N}`);
   check(`${diff} blocked squares hold no letter, free squares all do`, lettersOk === N, `${lettersOk}/${N}`);
   check(`${diff} no word repeats on a board`, distinct === N, `${distinct}/${N}`);
+}
+
+// Placement rules: a run may be wrong, but it may not overlap, and the board
+// is only judged once every open square is used.
+{
+  const p = genWend('Easy');
+  const right = p.paths;
+
+  check('wend: a run that spells nothing is still allowed down',
+    !overlaps([], [right[0][0], right[0][1]]));
+  check('wend: a run overlapping one already down is refused',
+    overlaps([right[0]], [right[0][0], right[0][1]]));
+
+  // Every square used, but two runs swapped end for end so they misspell.
+  const reversed = right.map((cells, i) => (i === 0 ? [...cells].reverse() : cells));
+  const reversedJudge = judge(p, reversed);
+  const firstWord = p.words[0];
+  const palindrome = spell(p, reversed[0]) === firstWord;
+  check('wend: a full board of wrong words does not count as solved',
+    palindrome || (reversedJudge.full && !reversedJudge.solved),
+    palindrome ? '(skipped: that word is a palindrome)' : '');
+
+  check('wend: a half-covered board is not judged yet',
+    !judge(p, right.slice(0, 1)).full && !judge(p, right.slice(0, 1)).solved);
+  check('wend: the intended runs solve it', judge(p, right).solved);
+
+  // Rows claim runs by length, and only one run per row.
+  const { rowRuns, slotOf } = assignRows(p, right);
+  check('wend: every row claims a run of its own length',
+    rowRuns.every((run, i) => run !== null && run.length === p.words[i].length));
+  check('wend: no run is claimed by two rows', new Set(slotOf.values()).size === slotOf.size);
+
+  const { rowRuns: partial } = assignRows(p, [right[0]]);
+  check('wend: rows with no run of their length stay empty',
+    partial.filter((run) => run !== null).length === 1);
 }
 
 // ---------- PINPOINT ----------

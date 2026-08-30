@@ -9,7 +9,7 @@ account, and no backend.
 | Queens | `/queens` | One crown per row, column and colour region, none touching |
 | Patches | `/patches` | Grow each marker into a rectangle so they tile the grid exactly |
 | Pinpoint | `/pinpoint` | Five things, one category — name it in as few clues as you can |
-| Wend | `/wend` | Trace words through a letter grid until every square is used |
+| Wend | `/wend` | Lay runs of letters through a grid until every square is used |
 | Tango | `/tango` | Fill a grid with suns and moons, balanced by row and column |
 | Zip | `/zip` | Draw one unbroken path through every square, visiting numbers in order |
 | Crossclimb | `/crossclimb` | Solve a word ladder, then reorder it one letter at a time |
@@ -39,7 +39,9 @@ word games are content-bound rather than algorithmic, and are honest about it:
 **Pinpoint** draws on a hand-written bank of 36 categories, and **Crossclimb**
 on a bank of 40 ladders. **Wend** generates its grids but draws its words from a
 curated list of everyday words, because a player has to recognise what they are
-tracing.
+tracing. Runs go down freely, word or not — the board is judged only once every
+open square is used, and the rules for that live in `wend/logic/rules.ts` so
+they can be tested rather than buried in the component.
 
 ## Getting started
 
