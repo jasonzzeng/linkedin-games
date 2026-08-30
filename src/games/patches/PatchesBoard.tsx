@@ -110,7 +110,7 @@ export function PatchesBoard({
       onPointerUp={handleUp}
       onPointerCancel={handleUp}
       style={{ width: span, height: span }}
-      className="board-surface relative rounded-lg border border-line bg-surface"
+      className="board-surface board-drag relative rounded-lg border border-line bg-surface"
     >
       {/* Empty grid behind everything. */}
       <div

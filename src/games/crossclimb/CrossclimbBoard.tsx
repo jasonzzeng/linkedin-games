@@ -73,8 +73,8 @@ function SortableRow({
         type="button"
         aria-label={canReorder ? `Reorder row ${index}` : 'Reordering locked'}
         disabled={!canReorder}
-        className={`flex size-8 shrink-0 items-center justify-center rounded-md text-faint
-          transition-colors ${
+        className={`flex size-11 shrink-0 items-center justify-center rounded-md text-faint
+          transition-colors sm:size-8 ${
             canReorder
               ? 'cursor-grab hover:bg-hover hover:text-ink active:cursor-grabbing'
               : 'opacity-30'
@@ -97,7 +97,7 @@ function SortableRow({
       </div>
 
       {/* Keyboard-reachable alternative to dragging. */}
-      <div className="flex w-8 shrink-0 flex-col items-center gap-0.5">
+      <div className="flex w-11 shrink-0 flex-col items-center gap-0.5 sm:w-8">
         {isActive && canReorder ? (
           <>
             <button
@@ -105,8 +105,8 @@ function SortableRow({
               onClick={() => moveRow(index, index - 1)}
               disabled={index === 1}
               aria-label="Move row up"
-              className="rounded p-0.5 text-faint transition-colors hover:bg-hover
-                hover:text-ink disabled:opacity-25"
+              className="rounded p-2 text-faint transition-colors hover:bg-hover
+                hover:text-ink disabled:opacity-25 sm:p-0.5"
             >
               <ChevronUp size={15} />
             </button>
@@ -115,8 +115,8 @@ function SortableRow({
               onClick={() => moveRow(index, index + 1)}
               disabled={index === rowCount - 2}
               aria-label="Move row down"
-              className="rounded p-0.5 text-faint transition-colors hover:bg-hover
-                hover:text-ink disabled:opacity-25"
+              className="rounded p-2 text-faint transition-colors hover:bg-hover
+                hover:text-ink disabled:opacity-25 sm:p-0.5"
             >
               <ChevronDown size={15} />
             </button>
@@ -186,7 +186,7 @@ export function CrossclimbBoard({ gameState, wordLength }: BoardProps) {
     <div className="w-full max-w-md">
       {/* Top row — locked until the ladder is built. */}
       <div className="flex items-center gap-2">
-        <div className="size-8 shrink-0" aria-hidden />
+        <div className="size-11 shrink-0 sm:size-8" aria-hidden />
         <div className="min-w-0 flex-1">
           <CrossclimbRow
             ref={(handle) => {
@@ -201,7 +201,7 @@ export function CrossclimbBoard({ gameState, wordLength }: BoardProps) {
             onComplete={() => advanceToNextRow(0)}
           />
         </div>
-        <div className="w-8 shrink-0" aria-hidden />
+        <div className="w-11 shrink-0 sm:w-8" aria-hidden />
       </div>
 
       <Link connected={connected(rows[0], rows[1])} />
@@ -240,7 +240,7 @@ export function CrossclimbBoard({ gameState, wordLength }: BoardProps) {
 
       {/* Bottom row */}
       <div className="flex items-center gap-2">
-        <div className="size-8 shrink-0" aria-hidden />
+        <div className="size-11 shrink-0 sm:size-8" aria-hidden />
         <div className="min-w-0 flex-1">
           <CrossclimbRow
             ref={(handle) => {
@@ -255,7 +255,7 @@ export function CrossclimbBoard({ gameState, wordLength }: BoardProps) {
             onComplete={() => advanceToNextRow(lastIndex)}
           />
         </div>
-        <div className="w-8 shrink-0" aria-hidden />
+        <div className="w-11 shrink-0 sm:w-8" aria-hidden />
       </div>
     </div>
   );

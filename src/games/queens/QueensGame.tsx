@@ -403,7 +403,7 @@ export default function QueensGame() {
     >
       <div
         className="flex w-full flex-col items-stretch gap-4"
-        style={{ width: 'min(78vmin, 460px)' }}
+        style={{ width: 'min(100%, 460px)' }}
       >
         {puzzle && derived ? (
           <QueensBoard

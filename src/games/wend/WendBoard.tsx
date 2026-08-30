@@ -225,7 +225,7 @@ export function WendBoard({
       onPointerUp={endTrace}
       onPointerCancel={endTrace}
       style={{ width: span, height: span }}
-      className={`board-surface relative overflow-hidden rounded-xl border-[3px]
+      className={`board-surface board-drag relative overflow-hidden rounded-xl border-[3px]
         border-[var(--wend-frame)] bg-surface ${shake ? 'animate-shake' : ''}`}
     >
       {/* 1. Square backgrounds and hairlines. */}

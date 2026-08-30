@@ -25,7 +25,8 @@ export function SegmentedControl<T extends string>({
             type="button"
             aria-pressed={isActive}
             onClick={() => onChange(option.value)}
-            className={`h-8 rounded-full px-3.5 text-[13px] font-semibold transition-colors ${
+            className={`h-10 rounded-full px-3.5 text-sm font-semibold transition-colors
+              sm:h-8 sm:text-[13px] ${
               isActive
                 ? 'bg-surface text-ink shadow-sm'
                 : 'text-muted hover:text-ink'

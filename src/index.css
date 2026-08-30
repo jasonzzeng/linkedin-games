@@ -292,6 +292,7 @@ body,
 
 body {
   margin: 0;
+  min-height: 100dvh;
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-sans);
@@ -320,6 +321,16 @@ body {
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/*
+ * Boards you draw on by dragging. `manipulation` still lets the browser pan,
+ * so on a touchscreen a drag scrolled the page instead of drawing — which made
+ * Zip, Wend and Patches unplayable by touch, since dragging is their whole
+ * input model. These surfaces claim the gesture outright.
+ */
+.board-drag {
+  touch-action: none;
 }
 
 @keyframes shake {

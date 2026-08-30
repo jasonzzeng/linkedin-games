@@ -24,9 +24,14 @@ const variants: Record<Variant, string> = {
   danger: 'bg-danger text-white hover:brightness-110 active:brightness-95 shadow-sm',
 };
 
+/*
+ * Touch first: 32px controls are well under the ~44px a finger needs, and the
+ * toolbars were entirely 32px. These start finger-sized and tighten up from
+ * the small breakpoint, where there is a pointer.
+ */
 const sizes: Record<Size, string> = {
-  sm: 'h-8 px-3 text-[13px]',
-  md: 'h-10 px-4 text-sm',
+  sm: 'h-11 px-4 text-sm sm:h-8 sm:px-3 sm:text-[13px]',
+  md: 'h-11 px-4 text-sm sm:h-10',
   lg: 'h-12 px-6 text-base w-full',
 };
 
@@ -54,7 +59,7 @@ export function IconButton({ label, className = '', children, ...rest }: IconBut
     <button
       aria-label={label}
       title={label}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-muted
+      className={`inline-flex size-11 items-center justify-center rounded-full text-muted sm:size-9
         transition-colors hover:bg-hover hover:text-ink
         disabled:opacity-30 disabled:pointer-events-none ${className}`}
       {...rest}

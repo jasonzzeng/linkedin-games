@@ -22,9 +22,10 @@ export function Select<T extends string>({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value as T)}
-        className="h-9 appearance-none rounded-full border border-line bg-surface
-          pl-3.5 pr-8 text-[13px] font-semibold text-ink shadow-sm transition-colors
-          hover:border-line-strong disabled:opacity-40 cursor-pointer"
+        className="h-11 appearance-none rounded-full border border-line bg-surface
+          pl-3.5 pr-8 text-sm font-semibold text-ink shadow-sm transition-colors
+          hover:border-line-strong disabled:opacity-40 cursor-pointer
+          sm:h-9 sm:text-[13px]"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

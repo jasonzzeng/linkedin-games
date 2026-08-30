@@ -143,7 +143,7 @@ export function ZipBoard({
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       style={gridStyle}
-      className={`board-surface relative grid overflow-hidden rounded-lg border border-line
+      className={`board-surface board-drag relative grid overflow-hidden rounded-lg border border-line
         bg-surface shadow-sm ${shake ? 'animate-shake' : ''}
         ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}
     >
