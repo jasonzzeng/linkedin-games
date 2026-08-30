@@ -101,7 +101,7 @@ function CrossclimbRound({ puzzle, difficulty, onChangeDifficulty, onNewPuzzle }
         options={difficultyOptions}
         onChange={onChangeDifficulty}
       />
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         <Button size="sm" onClick={handleHint} disabled={stage === 'COMPLETED'}>
           <Lightbulb size={15} /> Hint
           <span className="text-faint">+5s</span>
@@ -135,8 +135,8 @@ function CrossclimbRound({ puzzle, difficulty, onChangeDifficulty, onNewPuzzle }
           onClick={() => setActiveRowIndex(Math.max(0, activeRowIndex - 1))}
           disabled={activeRowIndex === 0}
           aria-label="Previous clue"
-          className="rounded-full p-2 text-faint transition-colors hover:bg-hover
-            hover:text-ink disabled:opacity-25"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full text-faint
+            transition-colors hover:bg-hover hover:text-ink disabled:opacity-25 sm:size-9"
         >
           <ChevronUp size={18} />
         </button>
@@ -148,8 +148,8 @@ function CrossclimbRound({ puzzle, difficulty, onChangeDifficulty, onNewPuzzle }
           onClick={() => setActiveRowIndex(Math.min(rows.length - 1, activeRowIndex + 1))}
           disabled={activeRowIndex === rows.length - 1}
           aria-label="Next clue"
-          className="rounded-full p-2 text-faint transition-colors hover:bg-hover
-            hover:text-ink disabled:opacity-25"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full text-faint
+            transition-colors hover:bg-hover hover:text-ink disabled:opacity-25 sm:size-9"
         >
           <ChevronDown size={18} />
         </button>

@@ -39,8 +39,9 @@ export function GameShell({ game, elapsed, toolbar, headerExtra, children }: Gam
           <Link
             to="/"
             aria-label="All games"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-sm
-              font-semibold text-muted transition-colors hover:bg-hover hover:text-ink"
+            className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full
+              px-2.5 text-sm font-semibold text-muted transition-colors hover:bg-hover
+              hover:text-ink sm:h-9 sm:min-w-0"
           >
             <ArrowLeft size={17} />
             <span className="hidden sm:inline">Games</span>

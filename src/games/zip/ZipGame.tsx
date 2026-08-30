@@ -165,7 +165,7 @@ export default function ZipGame() {
         options={inputOptions}
         onChange={setInputMode}
       />
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         <Button size="sm" onClick={handleUndo} disabled={history.length === 0}>
           <Undo2 size={15} /> Undo
         </Button>
